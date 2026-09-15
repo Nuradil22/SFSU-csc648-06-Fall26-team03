@@ -62,6 +62,28 @@ function About() {
             />
           ))}
         </div>
+
+        <div className="about-section">
+          <div className="box meet">
+            <h1 className="box-header">Team Meetings</h1>
+            <ul>
+              <li className="box-body meet-deet">
+                Our team is scheduled to meet twice a week: Once during in person classes
+                on Tuesdays (1:00 PM - 3:45 PM) and once over discord on Thursdays (1:00 PM)
+              </li>
+
+              <li className="box-body meet-deet">
+                Extra meetings will be arranged as needed
+              </li>
+
+              <li className="box-body meet-deet">
+                All extra communicaitons and collaboration can be coordinated through the
+                team Discord server
+              </li>
+            </ul>
+
+          </div>
+        </div>
         </>
     );
 }
