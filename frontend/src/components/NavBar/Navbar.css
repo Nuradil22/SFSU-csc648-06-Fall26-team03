@@ -1,0 +1,55 @@
+.navbar{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    background-color: whitesmoke;
+    padding: 10px;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-image: linear-gradient(to right, #ececec, whitesmoke, #ececec);
+    border-bottom: 2px solid;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(to right, #ececec, #3092c0, #ececec);
+
+}
+
+.app.dark .navbar{
+    background-image: linear-gradient(to right, #144f72, #0A3D5A, #144f72);
+    border-bottom: solid 1px;
+    border-image-source: linear-gradient(to right, #2E2E2E, #3092c0, #2E2E2E);
+}
+
+#logo{
+    height: 75px;
+    margin: 0;
+}
+
+.nav-btn{
+    background: transparent;
+    font-size: 20px;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px;
+    color: #297ca3;
+    text-decoration: none;
+}
+
+.active{
+    text-shadow: 0 0 10px #3092c0;
+    color: #3092c0;
+}
+
+.app.dark .nav-btn{
+    color: #3092c0;
+}
+
+.nav-btn:hover{
+    background-image: linear-gradient(to right, #297ca3, #3092c0, #3092c0, #297ca3);
+    color: whitesmoke;
+}
+
+.app.dark .nav-btn:hover{
+    color: whitesmoke;
+}

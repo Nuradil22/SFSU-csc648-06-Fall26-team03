@@ -1,0 +1,51 @@
+.form{
+    justify-content: center;
+    align-items: center;
+    padding: 15%;
+}
+
+.form-box{
+    text-align: center;
+    flex-direction: column;
+}
+
+.app.dark .form-box{
+    color: #44a8d6;
+}
+
+.fields{
+    padding-left: 15%;
+    padding-right: 15%;
+}
+
+.field{
+    width: 100%;
+    margin: 8px;
+    padding: 5px;
+    line-height: 25px;
+    border: 1px solid navy;
+    border-radius: 4px;
+}
+
+.app.dark .field{
+    border-color: #44a8d6;
+}
+
+.form-btn{
+    margin: 8px;
+    padding: 5px 8px 5px 8px;
+    border: 1px solid navy;
+    border-radius: 4px;
+    background-color: #3092c0;
+    color: whitesmoke;
+}
+
+.app.dark .form-btn:hover{
+    background-color: lightblue;
+    color: navy;
+}
+
+.form-btn:hover{
+    cursor: pointer;
+    background-color: navy;
+}
