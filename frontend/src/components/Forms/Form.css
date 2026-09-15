@@ -49,3 +49,13 @@
     cursor: pointer;
     background-color: navy;
 }
+
+.form-btn:disabled{
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-error{
+    color: #c0392b;
+    margin: 4px 0;
+}
