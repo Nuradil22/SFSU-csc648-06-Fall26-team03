@@ -1,0 +1,82 @@
+.team-member{
+    flex: 0 0 calc(33.333% - 13.33px); 
+    box-sizing: border-box;
+    padding: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.253);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    background-color: whitesmoke;
+    text-align: center;
+    height: auto;
+}
+
+.github-linker{
+    text-decoration: none;
+    color: black;
+}
+
+.app.dark .github-linker{
+    color: #44a8d6;
+}
+
+.app.dark .github-linker:hover{
+    color: whitesmoke;
+}
+
+.bio-container .bio{
+    display: none;
+}
+
+.bio-container:hover .bio{
+    display: inline-block;
+}
+.bio-container:hover .trigger-txt{
+    display: none;
+}
+
+.team-member:hover{
+    background-color: lightblue;
+    cursor: pointer;
+    box-shadow: 0px 4px 10px #44a8d6;
+    border: solid 1px #3092c0;
+}
+
+.app.dark .team-member{
+    border: solid 1px #3092c0;
+    box-shadow: 0px 0px 6px #44a8d6;
+    border-radius: 4px;
+    background-color: #3C3C3C;
+    text-shadow: 0 0 20px black;
+    color: #44a8d6;
+}
+
+.app.dark .team-member:hover{
+    background-color: #44a8d6;
+    color: whitesmoke;
+}
+
+.app.dark .team-member:hover .role{
+    color: whitesmoke;
+}
+
+.app.dark .team-member:hover .github-linker{
+    color: whitesmoke;
+}
+
+.team-member img {
+    border-radius: 4px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+    object-fit: contain;
+    width: 100%;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.role{
+    color: grey;
+    margin-bottom: 1rem;
+}
+
+.app.dark .role{
+    color: #3092c0;
+}

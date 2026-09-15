@@ -1,0 +1,20 @@
+.footer{
+    background-color:#144f72;
+    padding: 30px;
+    text-align: center;
+    color: whitesmoke;
+    height: 50vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.footer-column{
+    flex-direction: column;
+}
+
+.underline{
+    border-bottom: 2px solid;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(to right, #144f72, whitesmoke, #144f72);
+}

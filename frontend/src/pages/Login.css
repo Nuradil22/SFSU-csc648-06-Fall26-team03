@@ -1,0 +1,37 @@
+.login-page{
+    display: flex;
+    height: calc(100vh - 80px);
+}
+
+.auth-panel, .auth-art{
+    width: 50%;
+}
+
+.login-page.returning .auth-panel{
+    order: 2;
+}
+
+.login-page.returning .auth-art{
+    order: 1;
+}
+
+.login-page.signup .auth-panel{
+    order: 1;
+}
+
+.login-page.signup .auth-art{
+    order: 2;
+}
+
+.auth-art {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.auth-art img{
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
