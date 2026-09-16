@@ -1,57 +1,94 @@
-# SFSU CSC 648-06 Fall 2026 Team 03
+# CSC 648 Section 06 Team 03
 
 ## Project Overview
 
-This repository contains Team 03's CSC 648 Software Engineering project. We are currently working on Milestone 0, which focuses on GitHub collaboration, stack setup, remote deployment, a team/About website, and documentation.
+This repository contains Team 03's CSC 648 Software Engineering project. Milestone 0 establishes the team's GitHub workflow, software stack, remote deployment, database connection, About page, and documentation. The specific Career Path application concept has not been finalized; product-specific and AI features are planned for later milestones.
 
-The specific Career Path application concept has not been finalized yet. Product-specific features, database schemas, and AI integrations will be implemented in later milestones.
+## Team
 
-## Selected Stack
+| Member | Role |
+|---|---|
+| Rohit Vennelakanti | Team Lead |
+| Fanta Phommachith | Scrum Master |
+| Nuradil Kumarov | GitHub Master |
+| Obaidullah Darwishi | AI Master |
+| Ali Coklu | Backend |
+| Ian Ayala | Frontend |
 
-- **Frontend:** React
-- **Backend:** Python + FastAPI
-- **Database:** PostgreSQL hosted on Supabase
+## Software Stack
+
+- **Frontend:** React with Vite
+- **Backend:** Python with FastAPI
+- **Database:** PostgreSQL hosted through Supabase
 - **Frontend Hosting:** Vercel
 - **Backend Hosting:** Render
-- **AI Integration:** Planned LLM API integration through FastAPI (future milestone)
-
-## Team Roles
-
-| Name      | Role           |
-|-----------|----------------|
-| Rohit     | Team Lead      |
-| Fanta     | Scrum Master   |
-| Nuradil   | GitHub Master  |
-| Oibadullah| AI Master      |
-| Ali       | Backend        |
-| Ian       | Frontend       |
+- **Version Control:** Git and GitHub
+- **AI:** LLM API integration planned for later milestones
 
 ## Repository Structure
 
-```
+```text
 SFSU-csc648-06-Fall26-team03/
-│
 ├── app/
-│   ├── frontend/   # React application
-│   └── backend/    # FastAPI application
-│
+│   ├── frontend/       # React/Vite frontend
+│   └── backend/        # Python/FastAPI backend
 ├── milestones/
-│   └── m0/         # Milestone 0 deliverables
-│
+│   └── m0/             # Milestone 0 documentation
 ├── README.md
 ├── render.yaml
 └── .gitignore
 ```
 
-## Setup Instructions
+## Deployment
 
-Setup instructions will be added once the frontend and backend foundations are in place.
+- **Frontend:** https://sfsu-csc648-06-fall26-team03.vercel.app/
+- **Backend:** https://careergps-backend-n1uj.onrender.com/
+- **API documentation:** https://careergps-backend-n1uj.onrender.com/docs
+- **Health endpoint:** https://careergps-backend-n1uj.onrender.com/health
 
-- Ian will continue frontend development in `app/frontend/`.
-- Ali will continue backend development in `app/backend/`.
-- M0 deliverables, including the team/About website, will be added in `M0/`.
+## Local Setup
 
-## Notes
+### Frontend
 
-- Do not commit API keys, database passwords, tokens, or other secrets to this repository.
-- Keep environment-specific configuration in local `.env` files, which are ignored by Git.
+```bash
+cd app/frontend
+npm ci
+npm run dev
+```
+
+Additional available commands:
+
+```bash
+npm run lint
+npm run build
+npm run preview
+```
+
+### Backend
+
+```bash
+cd app/backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
+
+The local backend defaults to SQLite. The deployed backend uses PostgreSQL through the `DATABASE_URL` environment variable.
+
+## Environment Variables
+
+Frontend:
+
+- `VITE_API_URL`
+
+Backend:
+
+- `DATABASE_URL`
+- `SECRET_KEY`
+- `ALGORITHM`
+- `ACCESS_TOKEN_EXPIRE_MINUTES`
+- `ALLOWED_ORIGINS`
+
+Environment-specific values and secrets must be configured outside source control. Do not commit API keys, database credentials, JWT secrets, tokens, or populated `.env` files.
