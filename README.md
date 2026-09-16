@@ -30,10 +30,16 @@ The specific Career Path application concept has not been finalized yet. Product
 
 ```
 SFSU-csc648-06-Fall26-team03/
-├── frontend/   # React application (to be set up by Ian)
-├── backend/    # FastAPI application (to be set up by Ali)
-├── M0/         # Milestone 0 deliverables
+│
+├── app/
+│   ├── frontend/   # React application
+│   └── backend/    # FastAPI application
+│
+├── milestones/
+│   └── m0/         # Milestone 0 deliverables
+│
 ├── README.md
+├── render.yaml
 └── .gitignore
 ```
 
@@ -41,8 +47,8 @@ SFSU-csc648-06-Fall26-team03/
 
 Setup instructions will be added once the frontend and backend foundations are in place.
 
-- Ian will initialize the React project in `frontend/`.
-- Ali will initialize the FastAPI project in `backend/`.
+- Ian will continue frontend development in `app/frontend/`.
+- Ali will continue backend development in `app/backend/`.
 - M0 deliverables, including the team/About website, will be added in `M0/`.
 
 ## Notes
