@@ -11,6 +11,10 @@ import NuradilBio  from '../components/TeamMember/bios/NuradilBio'
 import ObaidullahBio from '../components/TeamMember/bios/ObaidullahBio'
 import ObaidullahPfp from '../assets/Team/Obaidullah.jpg'
 
+import FantaBio from '../components/TeamMember/bios/FantaBio'
+
+import AliBio from '../components/TeamMember/bios/AliBio'
+
 const team = [
     {
         name: "Rohit Vennelakanti",
@@ -24,7 +28,7 @@ const team = [
         name: "Fanta Phommachith",
         role: "Scrum Master",
         photo: genericPfp,
-        bio: "<bio>",
+        bio: FantaBio,
         github: "https://github.com/fphommachith"
     },
 
@@ -32,7 +36,7 @@ const team = [
         name: "Ali Coklu",
         role: "Backend Lead",
         photo: genericPfp,
-        bio: "<bio>",
+        bio: AliBio,
         github: "https://github.com/CokluAli"
     },
 

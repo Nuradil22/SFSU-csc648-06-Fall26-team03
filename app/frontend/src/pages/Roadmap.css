@@ -4,12 +4,29 @@
     justify-content: space-between;
 }
 
-.resWorkArea{
+.aiChat{
     display: flex;
     width: 70%;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
-    min-height: 200vh;
+}
+
+.chatHead{
+    display: flex;
+    justify-content: center;
+    height: 10%;
+    width: 100%;
+    border-bottom: 1px black solid;
+}
+
+.chatSection{
+    height: 80%;
+}
+
+.chatInput{
+    height: 10%;
 }
 
 .app.dark .resBody{
@@ -31,15 +48,6 @@
 .zone-off{
     display: none;
 }
-
-.toggle.on .dragDropZone{
-    
-}
-
-.buildZone{
-
-}
-
 
 .resFiles{
     margin-right: 0;
@@ -91,37 +99,4 @@
 
 .app.dark .option-toggled{
     text-shadow: 0 0 5px #3092c0;
-}
-
-.toggle {
-    width: 54px;
-    height: 30px;
-    padding: 3px;
-    margin: 24px 1rem 0 1rem; 
-    border: none;
-    border-radius: 999px;
-    background-color: #44a8d6;
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-
-    transition: background-color 0.2s ease;
-}
-
-.toggle-knob {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: white;
-
-    transition: transform 0.2s ease;
-}
-
-.toggle.on {
-    background-color: #44a8d6;
-}
-
-.toggle.on .toggle-knob {
-    transform: translateX(24px);
 }

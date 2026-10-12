@@ -1,0 +1,22 @@
+.project-contents{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: navy;
+}
+
+.app.dark .project-contents{
+    color: #44a8d6;
+}
+
+.project-contents:hover{
+    background-color: lightblue;
+    cursor: pointer;
+    box-shadow: 0px 4px 10px #44a8d6;
+    border: solid 1px #3092c0;
+}
+
+.app.dark .project-contents:hover{
+    background-color: #44a8d6;
+    color: whitesmoke;
+}

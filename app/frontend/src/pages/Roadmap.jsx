@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import './Resume.css';
+import './Roadmap.css';
 import quotes from '../data/inspoQuotes.js';
 
 const quoteCnt = quotes.length;
@@ -12,38 +12,30 @@ function getInspo(){
 
 let quote = getInspo();
 
-function Resume({ darkMode }){
+function Roadmap({ darkMode }){
     
     const [isDragDrop, setIsDragDrop] = useState(false);
 
     return(
         <main> 
             <div className ="banner"> 
-            <h1 className="banner-title">Build Your Resume</h1>
+            <h1 className="banner-title">Build Your Dream</h1>
             <p>"{quote.line}"</p>
             <p>- {quote.cred}</p>
             </div>
 
             <div className ="resBody">
-                <div className="resWorkArea box">
-                    <div className="toggle-section">
-
-                        <h2 className={isDragDrop ? "toggle-option" : "toggle-option option-toggled"}>Upload Resume</h2>
-
-                        <button
-                            className={`toggle ${isDragDrop ? "on" : ""}`}
-                            onClick={() => setIsDragDrop(!isDragDrop)}
-                            aria-pressed={isDragDrop}
-                        >
-                            <span className="toggle-knob"></span>
-                        </button>
-
-                        <h2 className={isDragDrop ? "toggle-option option-toggled" : "toggle-option"}>Build Resume</h2>
+                <div className="aiChat box">
+                    <div className="chatHead">
+                        <h1>AI Career Guidance</h1>
+                    </div>
+                    
+                    <div className="chatSection">
+                        <p>something something in the month of May</p>
                     </div>
 
-                    <div className={isDragDrop ? "zone-off" : "dragDropZone"}>
-                        <h1>Drag and Drop your .pdf or .docs here!</h1>
-                        <h3>...or click to browse for file</h3>
+                    <div className="chatInput">
+                        <p>this is where the user types a message</p>
                     </div>
 
                 </div>
@@ -74,4 +66,4 @@ function Resume({ darkMode }){
     );
 };
 
-export default Resume;
+export default Roadmap;

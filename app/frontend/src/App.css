@@ -99,3 +99,36 @@
 .meet-deet{
   text-align: left;
 }
+
+.toggle {
+    width: 54px;
+    height: 30px;
+    padding: 3px;
+    margin: 24px 1rem 0 1rem; 
+    border: none;
+    border-radius: 999px;
+    background-color: #44a8d6;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+
+    transition: background-color 0.2s ease;
+}
+
+.toggle-knob {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: white;
+
+    transition: transform 0.2s ease;
+}
+
+.toggle.on {
+    background-color: #44a8d6;
+}
+
+.toggle.on .toggle-knob {
+    transform: translateX(24px);
+}
