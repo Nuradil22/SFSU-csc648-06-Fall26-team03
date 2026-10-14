@@ -5,7 +5,7 @@ function About() {
     return(
         <>
         <div className ="banner"> 
-          <h1 className="banner-title">About CareerGPS</h1>
+          <h1 className="banner-title">About Projectory</h1>
           <p>Navigate your career with confidence</p>
         </div>
 
@@ -16,7 +16,7 @@ function About() {
               We are a team of computer science students passionate about bridging the gap
               between higher education and the modern job market. As a team full of seniors,
               we know firsthand how overwhelming it can be to get started on a career path.
-              That is why we create CareerGPS! We wanted to build an intuitive web application
+              That is why we create Projectory! We wanted to build an intuitive web application
               that simplifies the journey and help our peers get their foot in the door confidently.
               By transforming academic backgrounds and personal goals into clear, actionable career
               pathways and professional resumes, we are here to ensure the nos student has to navigate 

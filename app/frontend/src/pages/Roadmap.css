@@ -1,22 +1,39 @@
-.resBody{
+.res-body{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-.resWorkArea{
+.ai-chat{
     display: flex;
     width: 70%;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
-    min-height: 200vh;
 }
 
-.app.dark .resBody{
+.chat-head{
+    display: flex;
+    justify-content: center;
+    height: 10%;
+    width: 100%;
+    border-bottom: 1px black solid;
+}
+
+.chat-section{
+    height: 80%;
+}
+
+.chat-input{
+    height: 10%;
+}
+
+.app.dark .res-body{
     color: whitesmoke;
 }
 
-.dragDropZone{
+.drag-drop-zone{
     border: 2px #44a8d6 dashed;
     border-radius: 10px;
     display: flex;
@@ -32,16 +49,7 @@
     display: none;
 }
 
-.toggle.on .dragDropZone{
-    
-}
-
-.buildZone{
-
-}
-
-
-.resFiles{
+.res-files{
     margin-right: 0;
     max-width: 30%;
     height: 100vh;
@@ -91,37 +99,4 @@
 
 .app.dark .option-toggled{
     text-shadow: 0 0 5px #3092c0;
-}
-
-.toggle {
-    width: 54px;
-    height: 30px;
-    padding: 3px;
-    margin: 24px 1rem 0 1rem; 
-    border: none;
-    border-radius: 999px;
-    background-color: #44a8d6;
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-
-    transition: background-color 0.2s ease;
-}
-
-.toggle-knob {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: white;
-
-    transition: transform 0.2s ease;
-}
-
-.toggle.on {
-    background-color: #44a8d6;
-}
-
-.toggle.on .toggle-knob {
-    transform: translateX(24px);
 }

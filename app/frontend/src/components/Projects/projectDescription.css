@@ -1,0 +1,17 @@
+.project-description.light {
+  color: #222;
+}
+
+.project-description.dark {
+  color: #eee;
+}
+
+.project-description h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.project-description p,
+.project-description li {
+  line-height: 1.6;
+}
