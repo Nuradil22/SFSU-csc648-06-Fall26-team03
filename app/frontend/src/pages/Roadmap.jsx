@@ -24,23 +24,23 @@ function Roadmap({ darkMode }){
             <p>- {quote.cred}</p>
             </div>
 
-            <div className ="resBody">
-                <div className="aiChat box">
-                    <div className="chatHead">
+            <div className ="res-body">
+                <div className="ai-chat box">
+                    <div className="chat-head">
                         <h1>AI Career Guidance</h1>
                     </div>
                     
-                    <div className="chatSection">
+                    <div className="chat-section">
                         <p>something something in the month of May</p>
                     </div>
 
-                    <div className="chatInput">
+                    <div className="chat-input">
                         <p>this is where the user types a message</p>
                     </div>
 
                 </div>
 
-                <div className="resFiles box">
+                <div className="res-files box">
                     <h1>Your Documents</h1>
                     <p>--- example layout ---</p>
                     <h3>Job Category: Cyber Security</h3>

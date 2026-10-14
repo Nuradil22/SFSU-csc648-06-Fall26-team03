@@ -7,8 +7,6 @@
 
 .project-box {
     padding: 1rem 2rem 1rem 2rem;
-    display: flex;
-    flex-direction: column;
     width: 95%;
 }
 

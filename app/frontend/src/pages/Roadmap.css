@@ -1,10 +1,10 @@
-.resBody{
+.res-body{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-.aiChat{
+.ai-chat{
     display: flex;
     width: 70%;
     flex-direction: column;
@@ -13,7 +13,7 @@
 
 }
 
-.chatHead{
+.chat-head{
     display: flex;
     justify-content: center;
     height: 10%;
@@ -21,19 +21,19 @@
     border-bottom: 1px black solid;
 }
 
-.chatSection{
+.chat-section{
     height: 80%;
 }
 
-.chatInput{
+.chat-input{
     height: 10%;
 }
 
-.app.dark .resBody{
+.app.dark .res-body{
     color: whitesmoke;
 }
 
-.dragDropZone{
+.drag-drop-zone{
     border: 2px #44a8d6 dashed;
     border-radius: 10px;
     display: flex;
@@ -49,7 +49,7 @@
     display: none;
 }
 
-.resFiles{
+.res-files{
     margin-right: 0;
     max-width: 30%;
     height: 100vh;
