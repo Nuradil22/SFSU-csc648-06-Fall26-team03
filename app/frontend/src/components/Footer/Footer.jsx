@@ -1,11 +1,17 @@
 import './Footer.css';
+import { NavLink } from 'react-router-dom'
 
 function Footer(){
     return(
         <footer className="footer">
             <div className="footer-column">
-                <h1><span className="underline">Footer c1</span></h1>
+                <h1><span className="underline">Account</span></h1>
                 <p>This footer will look better later</p>
+
+                <NavLink to="/account/setup" end>
+                    Account Setup
+                </NavLink>
+
             </div>
             <div className="footer-column">
                 <h1><span className="underline">Footer c2</span></h1>

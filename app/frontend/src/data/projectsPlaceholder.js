@@ -171,7 +171,7 @@ const projects = [
         links: [
             {
                 label: "Main Github Repository",
-                url: "https://github.com/CSC615-2026-Spring/csc-615-assignment-2-tapeless-ruler-ianayala01",
+                url: "https://github.com/ianayala01/615-term-project",
                 type: "github"
             },
             {
