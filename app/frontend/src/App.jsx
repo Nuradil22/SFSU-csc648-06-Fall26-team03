@@ -9,6 +9,7 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Resume from "./pages/Roadmap";
 import Portfolio from "./pages/Portfolio";
+import CreateProject from "./pages/CreateProject";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -27,6 +28,7 @@ function App() {
           <Route path="/login" element={<Login darkMode={darkMode}/>} />
           <Route path="/roadmap" element={<Resume darkMode={darkMode}/>} />
           <Route path="/portfolio" element={<Portfolio darkMode={darkMode}/>} />
+          <Route path="/projects/new" element={<CreateProject darkMode={darkMode}/>} />
         </Routes>
         <Footer />
       </div>

@@ -10,3 +10,18 @@
     width: 95%;
 }
 
+.create-project-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    width: 88%;
+}
+
+.create-project-card:hover {
+    box-shadow: 0px 4px 10px #44a8d6;
+    border: solid 1px #3092c0;
+}

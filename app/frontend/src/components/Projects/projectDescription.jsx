@@ -10,7 +10,6 @@ function ProjectDescription({ blocks = [], darkMode }) {
 
                     case "paragraph":
                         return <p key={block.id}>{block.content}</p>;
-
                     case "list":
                         return (
                             <ul key={block.id}>

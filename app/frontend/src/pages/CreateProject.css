@@ -1,0 +1,58 @@
+.project-form {
+    width: 85%;
+    margin: 2rem auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.app.dark {
+    color: #44a8d6;
+}
+
+.project-form h2 {
+    margin-bottom: 1.5rem;
+}
+
+.header-fields{
+    display: flex;
+    flex-direction: row;
+    margin: 1rem 2rem 1rem 2rem;
+    width: 90%;
+}
+
+.header-field{
+    margin: 1rem;
+    width: 33%;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-field label {
+    font-weight: 600;
+}
+
+.form-field input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #999;
+    border-radius: 6px;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.app.dark .form-field input {
+    background-color: lightgray;
+}
+
+.form-field input:focus {
+    outline: 2px solid #44a8d6;
+    outline-offset: 2px;
+}
