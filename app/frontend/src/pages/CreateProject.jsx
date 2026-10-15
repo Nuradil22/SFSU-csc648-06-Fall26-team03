@@ -1,6 +1,8 @@
 import "./CreateProject.css";
 import "../components/Projects/DescriptionEditor";
+import ProjectGallery from "../components/Projects/ProjectGallery";
 import DescriptionEditor from "../components/Projects/DescriptionEditor";
+import ProjectLinks from "../components/Projects/ProjectLinks";
 
 function CreateProject({ darkMode }) {
     return (
@@ -9,7 +11,12 @@ function CreateProject({ darkMode }) {
                 <h1 className="banner-title">Your New Project !!</h1>
             </div>
 
-            <div className="box project-form">
+            <form className="box project-form"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    console.log("Project form is valid!");
+                }}
+            >
 
                 <div className="header-fields">
 
@@ -32,7 +39,17 @@ function CreateProject({ darkMode }) {
 
                 <DescriptionEditor />
 
-            </div>
+                <ProjectGallery />
+
+                <ProjectLinks />
+
+                <div className="project-form-actions">
+                    <button type="submit" className="project-submit-button">
+                        Preview Project
+                    </button>
+                </div>
+
+            </form>
         </main>
     );
 }

@@ -25,6 +25,26 @@ function DescriptionEditor() {
         );
     }
 
+
+    function deleteBlock(id) {
+        setBlocks((currentBlocks) =>
+            currentBlocks.filter((block) => block.id !== id)
+        );
+    }
+
+    function deleteBulletPoint(blockId, bulletIndex) {
+        setBlocks((currentBlocks) =>
+            currentBlocks.map((block) =>
+                block.id === blockId ? {
+                    ...block, content: block.content.filter(
+                        (_, index) => index !== bulletIndex
+                    )
+                } : block
+            )
+        );
+    }
+
+
     return (
         <section className="description-editor">
             <h2>Project Overview</h2>
@@ -33,7 +53,15 @@ function DescriptionEditor() {
 
                 {blocks.map((block) => (
                     <div key={block.id} className="description-editor-block">
+
+                        <button type="button" className="delete-item-button" aria-label="Delete this section"
+                            onClick={() => deleteBlock(block.id)}
+                        >
+                            Delete This Section
+                        </button>
+
                         {block.type === "heading" && (
+
                             <input type="text" placeholder="Enter heading..." value={block.content}
                                 onChange={(event) =>
                                     updateBlock(block.id, event.target.value)
@@ -52,24 +80,51 @@ function DescriptionEditor() {
 
                         {block.type === "list" && (
                             <div>
-                                <input type="text" placeholder="Enter list title..." value={block.title}
-                                onChange={(event) =>
-                                    setBlocks((currentBlocks) =>
-                                        currentBlocks.map((currentBlock) => 
-                                            currentBlock.id === block.id ? { ...currentBlock, title: event.target.value } : currentBlock )
-                                    )
-                                }
-                            />
+                                <input
+                                    type="text"
+                                    placeholder="Enter list title..."
+                                    value={block.title}
+                                    onChange={(event) =>
+                                        setBlocks((currentBlocks) =>
+                                            currentBlocks.map((currentBlock) =>
+                                                currentBlock.id === block.id
+                                                    ? {
+                                                        ...currentBlock,
+                                                        title: event.target.value
+                                                    }
+                                                    : currentBlock
+                                            )
+                                        )
+                                    }
+                                />
 
                                 {block.content.map((item, index) => (
-                                    <input key={index} type="text" placeholder={`Bullet point ${index + 1}`} value={item}
-                                        onChange={(event) => {
-                                            const updatedItems = [...block.content];
-                                            updatedItems[index] = event.target.value;
-                                            updateBlock(block.id, updatedItems);
-                                        }}
-                                    />
+                                    <div className="bullet-point-row" key={index}>
+
+                                        <button type="button" className="delete-item-button"
+                                            aria-label={`Delete bullet point ${index + 1}`}
+                                            onClick={() =>
+                                                deleteBulletPoint(block.id, index)
+                                            }
+                                        >
+                                            Delete Bullet
+                                        </button>
+
+                                        <input
+                                            type="text"
+                                            placeholder={`Bullet point ${index + 1}`}
+                                            value={item}
+                                            onChange={(event) => {
+                                                const updatedItems = [...block.content];
+                                                updatedItems[index] = event.target.value;
+                                                updateBlock(block.id, updatedItems);
+                                            }}
+                                        />
+
+
+                                    </div>
                                 ))}
+
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -83,6 +138,7 @@ function DescriptionEditor() {
                                 </button>
                             </div>
                         )}
+
                     </div>
                 ))}
             </div>

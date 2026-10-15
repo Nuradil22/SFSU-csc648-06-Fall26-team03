@@ -93,7 +93,6 @@
     padding: 9px 14px;
     border: 1px solid #3092c0;
     border-radius: 6px;
-    background-color: #263b59;
     color: whitesmoke;
     font: inherit;
     font-size: 0.9rem;
@@ -101,35 +100,11 @@
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.description-editor button:hover {
-    background-color: #344e73;
-    border-color: #3092c0;
-}
-
-.app.dark .description-editor button{
-    background-color: #3092c0;
-}
-
-.app.dark .description-editor button:hover{
-    background-color: #44a8d6;
-}
-
 .description-editor-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 20px;
-}
-
-.description-editor-controls button {
-    background-color: #263b59;
-    border-color: #263b59;
-    color: #ffffff;
-}
-
-.description-editor-controls button:hover {
-    background-color: #344e73;
-    border-color: #344e73;
 }
 
 @media (max-width: 600px) {
