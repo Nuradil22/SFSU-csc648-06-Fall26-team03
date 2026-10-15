@@ -6,8 +6,6 @@ function Footer(){
         <footer className="footer">
             <div className="footer-column">
                 <h1><span className="underline">Account</span></h1>
-                <p>This footer will look better later</p>
-
                 <NavLink to="/account/setup" end>
                     Account Setup
                 </NavLink>
@@ -18,8 +16,10 @@ function Footer(){
                 <p>This footer will look better later</p>
             </div>
             <div className="footer-column">
-                <h1><span className="underline">Footer c3</span></h1>
-                <p>This footer will look better later</p>
+                <h1><span className="underline">Resources</span></h1>
+                <NavLink to="/resources/certificates" end>
+                    SFSU Certificate Programs
+                </NavLink>
             </div>
         </footer>
     );

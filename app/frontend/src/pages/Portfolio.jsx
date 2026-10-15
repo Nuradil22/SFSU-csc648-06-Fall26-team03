@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 
-import './portfolio.css';
-import projects from '../data/projectsPlaceholder';
-import Project from '../components/Projects/project';
+import './Portfolio.css';
+import Projects from '../data/projectsPlaceholder';
+import Project from '../components/Projects/Project';
 
 function Portfolio ({ darkMode }){
     const navigate = useNavigate();
@@ -18,7 +18,7 @@ function Portfolio ({ darkMode }){
 
                 {/* List all a Users projects in a portfolio */}
                 <div className="project-box">
-                    {projects.map(proj => (
+                    {Projects.map(proj => (
                     <Project
                     key={proj.id}
                     date={proj.date}

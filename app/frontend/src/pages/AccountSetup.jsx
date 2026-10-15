@@ -67,7 +67,7 @@ function AccountSetup({ darkMode }) {
                 }}
             >
                 <div className="account-form-header">
-                    <div className="header-fields">
+                    <div className="account-header-fields">
                         <div className="account-form-field account-header-field">
                             <label className="header-label" htmlFor="user-name">
                                 Name

@@ -1,5 +1,4 @@
 import "./CreateProject.css";
-import "../components/Projects/DescriptionEditor";
 import ProjectGallery from "../components/Projects/ProjectGallery";
 import DescriptionEditor from "../components/Projects/DescriptionEditor";
 import ProjectLinks from "../components/Projects/ProjectLinks";

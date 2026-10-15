@@ -48,13 +48,13 @@
     border-color: #44a8d6;
 }
 
-.header-fields,
+.account-header-fields,
 .pfp-holder,
 .header-btns {
     width: 33%;
 }
 
-.header-fields {
+.account-header-fields {
     display: flex;
     flex-direction: column;
 }
