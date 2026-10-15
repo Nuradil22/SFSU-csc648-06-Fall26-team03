@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 
-import './portfolio.css';
-import projects from '../data/projectsPlaceholder';
-import Project from '../components/Projects/project';
+import './Portfolio.css';
+import Projects from '../data/projectsPlaceholder';
+import Project from '../components/Projects/Project';
 
 function Portfolio ({ darkMode }){
+    const navigate = useNavigate();
 
     return (
         <main>
@@ -14,8 +16,9 @@ function Portfolio ({ darkMode }){
 
             <div className="portfolio-body">
 
+                {/* List all a Users projects in a portfolio */}
                 <div className="project-box">
-                    {projects.map(proj => (
+                    {Projects.map(proj => (
                     <Project
                     key={proj.id}
                     date={proj.date}
@@ -27,8 +30,13 @@ function Portfolio ({ darkMode }){
                     darkMode={darkMode}
                     />
                 ))}
-
                 </div>
+
+                {/* Give the user an option to create a new project, routes to the new project page */}
+                <button className="box project-card create-project-card project-box" onClick={() => navigate("/projects/new")}>
+                    <h2>Create New Project !!</h2>
+                </button>
+
             </div>
         </main>
     );

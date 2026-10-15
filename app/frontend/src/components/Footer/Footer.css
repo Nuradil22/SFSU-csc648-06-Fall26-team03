@@ -18,3 +18,8 @@
     border-image-slice: 1;
     border-image-source: linear-gradient(to right, #144f72, whitesmoke, #144f72);
 }
+
+.footer a {
+    color: whitesmoke;
+    text-decoration: none;
+}

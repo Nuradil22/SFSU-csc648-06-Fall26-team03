@@ -20,7 +20,7 @@ function SignupForm({ isReturningUser, setIsReturningUser }) {
             const data = await signup({ name, email, password });
             localStorage.setItem('token', data.access_token);
             localStorage.setItem('user', JSON.stringify(data.user));
-            navigate('/');
+            navigate('/account/setup');
         } catch (err) {
             setError(err.message);
         } finally {

@@ -1,5 +1,9 @@
 const quotes =[
     {
+        line: "Of what use is a dream if not as a blueprint for courageous action?",
+        cred: "Adam West / Batman"
+    },
+    {
         line: "Never underestimate the power you have to take your life in a new direction",
         cred: "Germany Kent"
     },
