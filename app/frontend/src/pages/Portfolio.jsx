@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 
-import './Portfolio.css';
+import './portfolio.css';
 import Projects from '../data/projectsPlaceholder';
-import Project from '../components/Projects/Project';
+import Project from '../components/Projects/project';
 
 function Portfolio ({ darkMode }){
     const navigate = useNavigate();

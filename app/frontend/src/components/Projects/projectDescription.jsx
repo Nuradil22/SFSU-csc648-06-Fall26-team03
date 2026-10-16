@@ -1,4 +1,4 @@
-import "./ProjectDescription.css";
+import "./projectDescription.css";
 
 function ProjectDescription({ blocks = [], darkMode }) {
     return (
