@@ -1,0 +1,53 @@
+
+@startuml
+title Projectory - Account Registration & Login
+autonumber
+
+actor Student
+participant "React Frontend" as React
+participant "FastAPI Backend" as API
+database "PostgreSQL / Supabase" as DB
+
+Student -> React: Open Login / Sign Up page
+React --> Student: Display authentication form
+
+alt New Student - Registration
+    Student -> React: Enter name, email, password
+    React -> API: Submit registration information
+    API -> API: Validate required fields and password
+    API -> DB: Check if email already exists
+    DB --> API: Email lookup result
+
+    alt Email already registered or invalid input
+        API --> React: Registration error
+        React --> Student: Display error message
+    else Valid registration
+        API -> DB: Create student account
+        DB --> API: Account created
+        API --> React: Registration successful
+        React --> Student: Display confirmation
+    end
+
+else Existing Student - Login
+    Student -> React: Enter email and password
+    React -> API: Submit login credentials
+    API -> DB: Retrieve account by email
+    DB --> API: Account information
+    API -> API: Verify password
+
+    alt Invalid credentials
+        API --> React: Authentication error
+        React --> Student: Display login error
+    else Valid credentials
+        API --> React: Authentication success
+        React --> Student: Display dashboard
+    end
+end
+
+opt Student logs out
+    Student -> React: Click Logout
+    React -> React: Clear local authentication state
+    React --> Student: Return to login page
+end
+
+@enduml

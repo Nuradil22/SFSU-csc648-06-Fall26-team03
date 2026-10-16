@@ -1,0 +1,105 @@
+
+@startuml
+title Projectory - High-Level UML Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+class User {
+  +userId: UUID
+  +name: String
+  +email: String
+  -passwordHash: String
+  +register()
+  +login()
+  +logout()
+}
+
+class Portfolio {
+  +portfolioId: UUID
+  +biography: String
+  +careerInterests: String
+  +shareUrl: String
+  +updateProfile()
+  +getPublicView()
+}
+
+class Education {
+  +educationId: UUID
+  +schoolName: String
+  +degree: String
+  +major: String
+  +graduationDate: Date
+  +update()
+}
+
+class Skill {
+  +skillId: UUID
+  +name: String
+  +category: String
+  +update()
+}
+
+class Experience {
+  +experienceId: UUID
+  +organization: String
+  +position: String
+  +startDate: Date
+  +endDate: Date
+  +description: String
+  +update()
+}
+
+class Project {
+  +projectId: UUID
+  +title: String
+  +description: String
+  +create()
+  +edit()
+  +getDetails()
+}
+
+class ProjectMedia {
+  +mediaId: UUID
+  +mediaType: String
+  +mediaUrl: String
+  +remove()
+}
+
+class ThreeDModel {
+  +modelId: UUID
+  +modelUrl: String
+  +fileFormat: String
+  +attach()
+  +remove()
+}
+
+class CareerGuidance {
+  +guidanceId: UUID
+  +summary: String
+  +careerPaths: List
+  +strengths: List
+  +improvements: List
+  +nextSteps: List
+  +generateAnalysis()
+  +refreshAnalysis()
+}
+
+class AIService {
+  +analyzePortfolio()
+  +generateRecommendations()
+}
+
+User "1" -- "1" Portfolio : owns
+Portfolio "1" *-- "0..*" Education
+Portfolio "1" *-- "0..*" Skill
+Portfolio "1" *-- "0..*" Experience
+Portfolio "1" *-- "0..*" Project
+Portfolio "1" --> "0..*" CareerGuidance : receives
+Project "1" *-- "0..*" ProjectMedia
+Project "1" *-- "0..1" ThreeDModel
+AIService ..> Portfolio : analyzes
+AIService ..> CareerGuidance : generates
+
+@enduml

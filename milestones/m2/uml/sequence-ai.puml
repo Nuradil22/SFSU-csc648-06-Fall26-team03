@@ -1,0 +1,69 @@
+
+@startuml
+title Projectory - AI Portfolio Analysis & Career Guidance
+autonumber
+
+actor Student
+participant "React Frontend" as React
+participant "FastAPI Backend" as API
+database "PostgreSQL / Supabase" as DB
+participant "AI / LLM Service" as AI
+
+== Request Career Analysis ==
+
+Student -> React: Open AI Career Guidance page
+React --> Student: Display career guidance interface
+
+Student -> React: Click Analyze My Portfolio
+React -> API: Request portfolio analysis
+
+API -> API: Verify student authorization
+API -> DB: Retrieve student's portfolio data
+
+DB --> API: Education, skills, experience,\nprojects, career interests
+
+API -> API: Prepare portfolio information
+API -> AI: Submit relevant portfolio data
+
+alt AI service fails
+    AI --> API: Error or unavailable
+    API --> React: Analysis failed
+    React --> Student: Display error message
+
+else Analysis successful
+    AI --> API: Return analysis and recommendations
+
+    note right of API
+      Results may include:
+      - Portfolio summary (R10)
+      - Career paths (R11)
+      - Strengths (R12)
+      - Areas for improvement (R13)
+      - Suggested next steps (R13)
+    end note
+
+    API --> React: Return career guidance results
+    React --> Student: Display personalized guidance
+end
+
+== Refresh Career Analysis ==
+
+opt Student requests updated analysis
+    Student -> React: Click Refresh Analysis
+    React -> API: Request new analysis
+    API -> DB: Retrieve latest saved portfolio
+    DB --> API: Updated portfolio information
+    API -> AI: Analyze updated portfolio
+
+    alt Refresh fails
+        AI --> API: Error
+        API --> React: Refresh failed
+        React --> Student: Display error message
+    else Refresh succeeds
+        AI --> API: Updated career guidance
+        API --> React: Return updated results
+        React --> Student: Display refreshed guidance
+    end
+end
+
+@enduml

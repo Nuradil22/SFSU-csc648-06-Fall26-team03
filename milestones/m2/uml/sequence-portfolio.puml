@@ -1,0 +1,46 @@
+
+@startuml
+title Projectory - Portfolio Creation & Management
+autonumber
+
+actor Student
+participant "React Frontend" as React
+participant "FastAPI Backend" as API
+database "PostgreSQL / Supabase" as DB
+
+Student -> React: Open My Portfolio
+React -> API: Request portfolio information
+API -> DB: Retrieve student's portfolio data
+DB --> API: Personal info, education, skills, experience
+API --> React: Return portfolio information
+React --> Student: Display portfolio sections
+
+Student -> React: Click Edit Portfolio
+React --> Student: Display editing form
+
+Student -> React: Add or update portfolio information
+
+note right of React
+  Personal information (R3)
+  Education records (R4)
+  Skills (R5)
+  Experience records (R6)
+end note
+
+Student -> React: Click Save Changes
+React -> API: Submit updated portfolio data
+
+API -> API: Validate data and user authorization
+
+alt Invalid data or unauthorized user
+    API --> React: Return error response
+    React --> Student: Display error message
+
+else Valid and authorized
+    API -> DB: Insert or update portfolio records
+    DB --> API: Confirm saved changes
+    API --> React: Return updated portfolio
+    React --> Student: Display updated portfolio
+end
+
+@enduml
