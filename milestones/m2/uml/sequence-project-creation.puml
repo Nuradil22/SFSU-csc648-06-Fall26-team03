@@ -1,0 +1,39 @@
+
+@startuml
+title Projectory - Project Creation & Management
+autonumber
+
+actor Student
+participant "React Frontend" as React
+participant "FastAPI Backend" as API
+database "PostgreSQL / Supabase" as DB
+
+Student -> React: Open Portfolio page
+Student -> React: Click New Project
+React --> Student: Display creation form
+
+Student -> React: Enter project title and description
+Student -> React: Click Submit
+React --> Student: Display project preview
+
+alt Back to Editor
+    Student -> React: Return to editor
+    React --> Student: Display editable form
+else Confirm Submission
+    Student -> React: Confirm project
+    React -> API: Submit project data
+
+    API -> API: Validate project data
+
+    alt Invalid project data
+        API --> React: Return validation error
+        React --> Student: Display error message
+    else Valid project data
+        API -> DB: Insert project record
+        DB --> API: Return saved project
+        API --> React: Return success response
+        React --> Student: Display saved project
+    end
+end
+
+@enduml

@@ -1,0 +1,64 @@
+
+@startuml
+title Projectory - Portfolio Viewing & Sharing
+autonumber
+
+actor Student
+actor Visitor
+participant "React Frontend" as React
+participant "FastAPI Backend" as API
+database "PostgreSQL / Supabase" as DB
+participant "3D Model Viewer" as Viewer3D
+
+== Generate Shareable Portfolio Link ==
+
+Student -> React: Open My Portfolio
+Student -> React: Click Share Portfolio
+
+React -> API: Request shareable portfolio link
+API -> API: Verify student authorization
+
+alt Unauthorized student
+    API --> React: Return authorization error
+    React --> Student: Display error message
+
+else Authorized student
+    API -> DB: Retrieve portfolio sharing information
+    DB --> API: Return portfolio reference
+    API --> React: Return shareable URL
+    React --> Student: Display shareable link
+end
+
+== Visitor Opens Shared Portfolio ==
+
+Visitor -> React: Open shared portfolio URL
+React -> API: Request shared portfolio data
+API -> DB: Retrieve portfolio and projects
+
+alt Portfolio unavailable or not shared
+    DB --> API: No accessible portfolio
+    API --> React: Return not found / access error
+    React --> Visitor: Display unavailable message
+
+else Portfolio available
+    DB --> API: Return portfolio information
+    API --> React: Return public portfolio data
+
+    React --> Visitor: Display personal information,\neducation, skills, experience, projects
+
+    opt Project contains a supported 3D model
+        React -> Viewer3D: Load associated model
+        Viewer3D --> React: Display interactive model
+        React --> Visitor: Show 3D project
+    end
+end
+
+note over Visitor,DB
+  Visitors can view shared portfolio data
+  without logging in (R17.2).
+
+  Visitors cannot edit or delete
+  portfolio information (R17.5).
+end note
+
+@enduml

@@ -1,0 +1,58 @@
+
+@startuml
+title Projectory - Interactive 3D Project Showcase
+autonumber
+
+actor Student
+actor Viewer
+participant "React Frontend" as React
+participant "FastAPI Backend" as API
+database "PostgreSQL / Supabase" as DB
+participant "3D Model Storage" as Storage
+participant "3D Viewer" as ModelViewer
+
+== Attach 3D Model ==
+
+Student -> React: Open existing project
+Student -> React: Select 3D model file
+React -> API: Submit model attachment request
+
+API -> API: Check authorization and validate format
+
+alt Unsupported format or unauthorized
+    API --> React: Return error
+    React --> Student: Display error message
+else Valid model
+    API -> Storage: Store 3D model file
+    Storage --> API: Return model reference
+    API -> DB: Associate model metadata with project
+    DB --> API: Confirm association
+    API --> React: Return success
+    React --> Student: Show attached model
+end
+
+== View 3D Model ==
+
+Viewer -> React: Open project page
+React -> API: Request project and 3D model information
+API -> DB: Retrieve project and model metadata
+DB --> API: Return project and model reference
+API --> React: Return project information
+
+React -> ModelViewer: Load model using reference
+ModelViewer -> Storage: Request model asset
+
+alt Model unavailable or loading fails
+    Storage --> ModelViewer: Error
+    ModelViewer --> React: Loading failure
+    React --> Viewer: Display error message
+else Model loaded successfully
+    Storage --> ModelViewer: Model asset
+    ModelViewer --> React: Rendered model ready
+    React --> Viewer: Display interactive 3D model
+
+    Viewer -> ModelViewer: Rotate or zoom
+    ModelViewer --> Viewer: Update model view
+end
+
+@enduml
