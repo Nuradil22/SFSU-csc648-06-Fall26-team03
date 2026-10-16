@@ -1,6 +1,6 @@
 import { useState } from "react";
-import './Project.css';
-import ProjectDescription from "./ProjectDescription";
+import './project.css';
+import ProjectDescription from "./projectDescription";
 
 function Project({name, date, type, description, images, links, darkMode}) {
 
