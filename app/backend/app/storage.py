@@ -114,7 +114,11 @@ class SupabaseStorage:
             raise StorageError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for Supabase storage")
         self.api = f"{url.rstrip('/')}/storage/v1"
         self.bucket = bucket
-        self.headers = {"Authorization": f"Bearer {service_key}", "apikey": service_key}
+        self.headers = {"apikey": service_key}
+        # Legacy service_role keys are JWTs and also go in Authorization. Newer
+        # sb_secret_... keys are not JWTs and must only be sent as `apikey`.
+        if service_key.startswith("eyJ"):
+            self.headers["Authorization"] = f"Bearer {service_key}"
 
     def _upload(self, client: httpx.Client, path: str, data: bytes, content_type: str) -> httpx.Response:
         return client.post(
