@@ -6,6 +6,7 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -16,4 +17,20 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "1440"
       - key: ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        value: https://sfsu-csc648-06-fall26-team03.vercel.app
+      - key: PUBLIC_API_URL
+        value: https://careergps-backend-n1uj.onrender.com
+      - key: STORAGE_BACKEND
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: careergps-media
+      - key: AI_PROVIDER
+        sync: false
+      - key: ANTHROPIC_API_KEY
         sync: false

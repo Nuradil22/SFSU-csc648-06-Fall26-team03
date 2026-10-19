@@ -95,3 +95,6 @@ htmlcov/
 .cache/
 .temp/
 tmp/
+
+# Local file uploads (STORAGE_BACKEND=local)
+app/backend/uploads/
