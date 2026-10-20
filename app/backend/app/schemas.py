@@ -354,6 +354,14 @@ class ProjectOut(ORMModel):
         return data
 
 
+class ProjectSearchOut(ProjectOut):
+    """A project in public browse/search results, with who made it. `share_token`
+    links to the owner's public portfolio: /public/portfolios/{share_token}."""
+
+    owner_name: str
+    share_token: str | None
+
+
 # ---------------------------------------------------------------------------
 # Full portfolio views (R9, R17)
 # ---------------------------------------------------------------------------

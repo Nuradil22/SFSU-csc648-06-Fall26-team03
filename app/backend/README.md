@@ -32,6 +32,18 @@ uvicorn app.main:app --reload --port 8000
   the "username" to try authenticated endpoints.
 - Health check: http://localhost:8000/health
 
+## Demo data
+
+```bash
+python scripts/seed_demo.py                     # against the local API
+python scripts/seed_demo.py --api https://careergps-backend-n1uj.onrender.com
+```
+
+Creates 4 demo students (emails `@example.com`) with 12 projects. Safe to re-run.
+
+For the frontend team: see [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md) for sample
+responses, and [schema.sql](schema.sql) for the database schema.
+
 ## Test
 
 ```bash
@@ -57,8 +69,8 @@ so the frontend has an endpoint to call.
 
 ## Endpoints
 
-All `/portfolio/me/*`, `/projects/*`, and `/guidance/*` routes require a token and
-only ever touch the caller's own data. Someone else's record ids return 404 (R2.5).
+All `/portfolio/me/*`, `/guidance/*`, and `/projects/*` routes (except public
+`GET /projects`) require a token and only ever touch the caller's own data. Someone else's record ids return 404 (R2.5).
 PATCH bodies are partial: send only the fields you want to change.
 
 | Method | Path | Req. | Description |
@@ -78,7 +90,9 @@ PATCH bodies are partial: send only the fields you want to change.
 | PATCH/DELETE | `/portfolio/me/skills/{id}` | R5.2, R5.3 | |
 | GET/POST | `/portfolio/me/experience` | R6 | Work / internship / volunteer / academic / research / other |
 | PATCH/DELETE | `/portfolio/me/experience/{id}` | R6.3, R6.4 | |
-| GET/POST | `/projects` | R7 | List / create projects |
+| GET | `/projects` | | **Public** browse/search: `?search=`, `?category=`, `?limit=`, `?offset=` |
+| GET | `/projects/mine` | R7.5 | My projects |
+| POST | `/projects` | R7.1–R7.3 | Create a project |
 | GET/PATCH/DELETE | `/projects/{id}` | R7.4 | |
 | POST | `/projects/{id}/images` | R8.1 | Upload image (multipart: `file`, optional `label`) |
 | POST | `/projects/{id}/images/url` | R8.1 | Attach an image by URL |

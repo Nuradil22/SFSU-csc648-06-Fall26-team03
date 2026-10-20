@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, storage
@@ -18,9 +19,54 @@ def _get_media(db: Session, project: models.Project, media_id: int) -> models.Pr
 
 # --- Projects (R7) -----------------------------------------------------------
 
-@router.get("", response_model=list[schemas.ProjectOut])
-def list_projects(portfolio: models.Portfolio = Depends(get_current_portfolio)):
-    """R7.5"""
+@router.get("", response_model=list[schemas.ProjectSearchOut])
+def browse_projects(
+    search: str | None = Query(None, max_length=100, description="Keywords matched against title, description, category, and technologies"),
+    category: str | None = Query(None, max_length=200, description="Exact category (the project's `subject`), case-insensitive"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """Public browse/search over stored projects. No login needed.
+
+    Only projects from portfolios whose owner turned sharing on are returned (NFR4).
+    Every keyword in `search` must appear somewhere in the project, e.g.
+    `/projects?search=robot python` finds projects mentioning both words.
+    Newest first.
+    """
+    query = (
+        db.query(models.Project)
+        .join(models.Portfolio)
+        .join(models.User)
+        .filter(models.Portfolio.is_public.is_(True))
+    )
+    for word in (search or "").split():
+        word = word.lower()
+        query = query.filter(
+            or_(
+                func.lower(models.Project.title).contains(word, autoescape=True),
+                func.lower(models.Project.description).contains(word, autoescape=True),
+                func.lower(models.Project.subject).contains(word, autoescape=True),
+                func.lower(cast(models.Project.technologies, String)).contains(word, autoescape=True),
+            )
+        )
+    if category and category.strip():
+        query = query.filter(func.lower(models.Project.subject) == category.strip().lower())
+
+    projects = query.order_by(models.Project.id.desc()).offset(offset).limit(limit).all()
+    return [
+        schemas.ProjectSearchOut(
+            **schemas.ProjectOut.model_validate(p).model_dump(),
+            owner_name=p.portfolio.user.name,
+            share_token=p.portfolio.share_token,
+        )
+        for p in projects
+    ]
+
+
+@router.get("/mine", response_model=list[schemas.ProjectOut])
+def list_my_projects(portfolio: models.Portfolio = Depends(get_current_portfolio)):
+    """R7.5: all of the logged-in student's projects, shared or not."""
     return portfolio.projects
 
 
