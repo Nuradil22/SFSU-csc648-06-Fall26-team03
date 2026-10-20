@@ -1,8 +1,7 @@
-import { useState } from "react";
 import "./ProjectLinks.css";
 
-function ProjectLinks() {
-    const [links, setLinks] = useState([]);
+// Controlled: the parent page owns `links` so it can save and pre-fill them.
+function ProjectLinks({ links, setLinks }) {
 
     function addLink() {
         const newLink = {

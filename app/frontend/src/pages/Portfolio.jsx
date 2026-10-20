@@ -1,34 +1,73 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import './portfolio.css';
-import Projects from '../data/projectsPlaceholder';
 import Project from '../components/Projects/project';
+import { deleteProject, getCurrentUser, getMyProjects, getToken } from '../lib/api';
+import { toProjectProps } from '../lib/projects';
 
 function Portfolio ({ darkMode }){
     const navigate = useNavigate();
+    const isLoggedIn = Boolean(getToken());
+    const user = getCurrentUser();
+
+    const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(isLoggedIn);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (!isLoggedIn) return;
+        getMyProjects()
+            .then(setProjects)
+            .catch((err) => setError(err.message))
+            .finally(() => setLoading(false));
+    }, [isLoggedIn]);
+
+    async function handleDelete(project) {
+        if (!window.confirm(`Delete "${project.title}"? This can't be undone.`)) return;
+        try {
+            await deleteProject(project.id);
+            setProjects((current) => current.filter((p) => p.id !== project.id));
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+
+    if (!isLoggedIn) {
+        return (
+            <main>
+                <div className ="banner">
+                    <h1 className="banner-title">Your Portfolio</h1>
+                </div>
+                <div className="portfolio-body">
+                    <p className="box project-box">
+                        <Link to="/login">Log in</Link> to see and manage your projects,
+                        or <Link to="/explore">explore other students' projects</Link>.
+                    </p>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main>
-            <div className ="banner"> 
-                <h1 className="banner-title">User's Portfolio</h1>
+            <div className ="banner">
+                <h1 className="banner-title">{user?.name ? `${user.name}'s Portfolio` : "Your Portfolio"}</h1>
             </div>
 
             <div className="portfolio-body">
 
+                {loading && <p>Loading your projects...</p>}
+                {error && <p className="form-error" role="alert">{error}</p>}
+                {!loading && !error && projects.length === 0 && <p>You haven't added any projects yet.</p>}
+
                 {/* List all a Users projects in a portfolio */}
                 <div className="project-box">
-                    {Projects.map(proj => (
-                    <Project
-                    key={proj.id}
-                    date={proj.date}
-                    name={proj.name}
-                    type={proj.type}
-                    description={proj.description}
-                    images={proj.images}
-                    links={proj.links}
-                    darkMode={darkMode}
-                    />
+                    {projects.map(project => (
+                    <Project key={project.id} {...toProjectProps(project)} darkMode={darkMode}>
+                        <button type="button" onClick={() => navigate(`/projects/${project.id}/edit`)}>Edit</button>
+                        <button type="button" onClick={() => handleDelete(project)}>Delete</button>
+                    </Project>
                 ))}
                 </div>
 

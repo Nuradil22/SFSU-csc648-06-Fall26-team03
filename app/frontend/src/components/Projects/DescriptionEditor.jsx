@@ -1,8 +1,7 @@
-import { useState } from "react";
 import "./DescriptionEditor.css";
 
-function DescriptionEditor() {
-    const [blocks, setBlocks] = useState([]);
+// Controlled: the parent page owns `blocks` so it can save and pre-fill them.
+function DescriptionEditor({ blocks, setBlocks }) {
 
     function addBlock(type) {
         const newBlock = {

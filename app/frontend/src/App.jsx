@@ -12,6 +12,8 @@ import Portfolio from "./pages/Portfolio";
 import CreateProject from "./pages/CreateProject";
 import AccountSetup from "./pages/AccountSetup";
 import Certificates from "./pages/Certificates";
+import Explore from "./pages/Explore";
+import SharedPortfolio from "./pages/SharedPortfolio";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -32,6 +34,9 @@ function App() {
           <Route path="/roadmap" element={<Resume darkMode={darkMode}/>} />
           <Route path="/portfolio" element={<Portfolio darkMode={darkMode}/>} />
           <Route path="/projects/new" element={<CreateProject darkMode={darkMode}/>} />
+          <Route path="/projects/:id/edit" element={<CreateProject darkMode={darkMode}/>} />
+          <Route path="/explore" element={<Explore darkMode={darkMode}/>} />
+          <Route path="/p/:shareToken" element={<SharedPortfolio darkMode={darkMode}/>} />
           <Route path="/resources/certificates" element={<Certificates darkMode={darkMode} />} />
         </Routes>
         <Footer />

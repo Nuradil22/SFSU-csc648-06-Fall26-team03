@@ -10,14 +10,21 @@ function ProjectDescription({ blocks = [], darkMode }) {
 
                     case "paragraph":
                         return <p key={block.id}>{block.content}</p>;
-                    case "list":
+                    case "list": {
+                        // The DescriptionEditor saves bullets in `content` (with a `title`);
+                        // older placeholder data used `items`.
+                        const items = (block.items || block.content || []).filter((item) => item.trim());
                         return (
-                            <ul key={block.id}>
-                                {block.items.map((item, index) => (
-                                    <li key={index}>{item}</li>
-                                ))}
-                            </ul>
+                            <div key={block.id}>
+                                {block.title && <h4>{block.title}</h4>}
+                                <ul>
+                                    {items.map((item, index) => (
+                                        <li key={index}>{item}</li>
+                                    ))}
+                                </ul>
+                            </div>
                         );
+                    }
 
                     default:
                         return null;

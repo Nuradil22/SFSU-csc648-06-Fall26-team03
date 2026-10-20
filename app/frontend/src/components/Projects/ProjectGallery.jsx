@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import "./ProjectGallery.css";
 
-function ProjectGallery() {
-    const [images, setImages] = useState([]);
+// Controlled: the parent page owns `images`. New images carry their `file` so the
+// page can upload them; images already saved on the server have `saved: true`.
+function ProjectGallery({ images, setImages }) {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef(null);
 
+    // Free the local preview URLs when the page is closed.
+    const imagesRef = useRef(images);
+    useEffect(() => {
+        imagesRef.current = images;
+    }, [images]);
     useEffect(() => {
         return () => {
-            images.forEach((image) => URL.revokeObjectURL(image.src));
+            imagesRef.current.forEach((image) => image.file && URL.revokeObjectURL(image.src));
         };
-    }, [images]);
+    }, []);
 
     function addImages(files) {
         const imageFiles = Array.from(files).filter((file) =>
@@ -19,6 +25,7 @@ function ProjectGallery() {
 
         const newImages = imageFiles.map((file) => ({
             id: crypto.randomUUID(),
+            file,
             src: URL.createObjectURL(file),
             alt: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
         }));
@@ -32,7 +39,7 @@ function ProjectGallery() {
                 (image) => image.id === id
             );
 
-            if (imageToDelete) {
+            if (imageToDelete?.file) {
                 URL.revokeObjectURL(imageToDelete.src);
             }
 
@@ -109,7 +116,8 @@ function ProjectGallery() {
                                     Image description (alt text)
                                 </label>
 
-                                <input id={`image-alt-${image.id}`} type="text" value={image.alt} placeholder="Describe this image"
+                                <input id={`image-alt-${image.id}`} type="text" value={image.alt || ""} placeholder="Describe this image"
+                                    disabled={image.saved}
                                     onChange={(event) =>
                                         updateAltText(
                                             image.id,

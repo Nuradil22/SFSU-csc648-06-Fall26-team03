@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Form.css';
-import { login } from '../../lib/api';
+import { login, saveAuth } from '../../lib/api';
 
 function LoginForm({ isReturningUser, setIsReturningUser }) {
     const [email, setEmail] = useState('');
@@ -17,8 +17,7 @@ function LoginForm({ isReturningUser, setIsReturningUser }) {
 
         try {
             const data = await login({ email, password });
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            saveAuth(data);
             navigate('/');
         } catch (err) {
             setError(err.message);

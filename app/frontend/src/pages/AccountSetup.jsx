@@ -1,7 +1,12 @@
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./AccountSetup.css";
 import defaultPfp from "../assets/Team/generic-icon.png";
+import { education, enableSharing, getMyPortfolio, getToken, saveAuth, skills as skillsApi, updateMyPortfolio } from "../lib/api";
+
+// The form only asks for a graduation year; the API stores a date.
+const yearToDate = (year) => (year ? `${year}-05-31` : null);
 
 function AccountSetup({ darkMode }) {
     const [isEditing, setIsEditing] = useState(true);
@@ -12,16 +17,110 @@ function AccountSetup({ darkMode }) {
     const [email, setEmail] = useState("");
     const [location, setLocation] = useState("");
 
-    const [skills, setSkills] = useState([
-        { id: 1, name: "JavaScript" },
-        { id: 2, name: "React" },
-    ]);
+    const [skills, setSkills] = useState([]);
 
     const [degrees, setDegrees] = useState([]);
     const [certificates, setCertificates] = useState([]);
     const [jobPreferences, setJobPreferences] = useState([]);
 
     const [newSkill, setNewSkill] = useState("");
+
+    // Skills and degrees as last loaded from the server (`saved: true`), used to
+    // work out what to add, change, or delete on save. Certificates, job
+    // preferences, and the profile picture aren't stored by the backend yet.
+    const [saved, setSaved] = useState({ skills: [], degrees: [] });
+    const [status, setStatus] = useState("");
+    const [error, setError] = useState("");
+    const [shareUrl, setShareUrl] = useState("");
+    const isLoggedIn = Boolean(getToken());
+
+    const applyPortfolio = useCallback((portfolio) => {
+        setName(portfolio.name);
+        setEmail(portfolio.email);
+        setLocation(portfolio.location || "");
+        const savedSkills = portfolio.skills.map((skill) => ({ id: skill.id, name: skill.name, category: skill.category, saved: true }));
+        const savedDegrees = portfolio.education.map((edu) => ({
+            id: edu.id,
+            degree: [edu.degree, edu.major].filter(Boolean).join(" ") || "",
+            institution: edu.school_name,
+            year: edu.graduation_date ? edu.graduation_date.slice(0, 4) : "",
+            saved: true,
+        }));
+        setSkills(savedSkills);
+        setDegrees(savedDegrees);
+        setSaved({ skills: savedSkills, degrees: savedDegrees });
+        setShareUrl(portfolio.share_url ? `${window.location.origin}${new URL(portfolio.share_url).pathname}` : "");
+        // Brand-new accounts (straight from sign-up) start in edit mode.
+        setIsEditing(!(portfolio.location || portfolio.skills.length || portfolio.education.length));
+    }, []);
+
+    const loadPortfolio = useCallback(
+        () => getMyPortfolio().then(applyPortfolio).catch((err) => setError(err.message)),
+        [applyPortfolio]
+    );
+
+    useEffect(() => {
+        if (!isLoggedIn) return;
+        getMyPortfolio().then(applyPortfolio).catch((err) => setError(err.message));
+    }, [isLoggedIn, applyPortfolio]);
+
+    async function saveProfile() {
+        setError("");
+        setStatus("Saving...");
+        try {
+            for (const degree of degrees) {
+                if (!degree.institution.trim()) throw new Error("Each degree needs an institution.");
+            }
+
+            const portfolio = await updateMyPortfolio({ name: name.trim(), location: location.trim() || null });
+            saveAuth({ access_token: getToken(), user: { ...JSON.parse(localStorage.getItem("user") || "{}"), name: portfolio.name } });
+
+            const keptSkills = new Set(skills.filter((skill) => skill.saved).map((skill) => skill.id));
+            for (const skill of saved.skills.filter((skill) => !keptSkills.has(skill.id))) {
+                await skillsApi.remove(skill.id);
+            }
+            for (const skill of skills) {
+                const old = saved.skills.find((savedSkill) => savedSkill.id === skill.id);
+                if (!skill.name.trim()) continue;
+                if (!old) await skillsApi.add({ name: skill.name.trim() });
+                else if (old.name !== skill.name) await skillsApi.update(skill.id, { name: skill.name.trim() });
+            }
+
+            const keptDegrees = new Set(degrees.filter((degree) => degree.saved).map((degree) => degree.id));
+            for (const degree of saved.degrees.filter((degree) => !keptDegrees.has(degree.id))) {
+                await education.remove(degree.id);
+            }
+            for (const degree of degrees) {
+                // The form has one "Degree" box holding degree and major together
+                // (e.g. "B.S. Computer Science"), so major is folded into it.
+                const fields = { school_name: degree.institution.trim(), degree: degree.degree.trim() || null, major: null, graduation_date: yearToDate(degree.year) };
+                const old = saved.degrees.find((savedDegree) => savedDegree.id === degree.id);
+                if (!old) await education.add(fields);
+                else if (old.degree !== degree.degree || old.institution !== degree.institution || old.year !== degree.year) {
+                    await education.update(degree.id, fields);
+                }
+            }
+
+            await loadPortfolio();
+            setStatus("Profile saved.");
+        } catch (err) {
+            setStatus("");
+            setError(err.message);
+        }
+    }
+
+    async function shareProfile() {
+        setError("");
+        try {
+            const share = await enableSharing();
+            const url = `${window.location.origin}/p/${share.share_token}`;
+            setShareUrl(url);
+            await navigator.clipboard?.writeText(url).catch(() => {});
+            setStatus("Share link copied to clipboard.");
+        } catch (err) {
+            setError(err.message);
+        }
+    }
 
     function addEntry(setter, newEntry) {
         setter((currentEntries) => [
@@ -57,6 +156,14 @@ function AccountSetup({ darkMode }) {
         }
     }
 
+    if (!isLoggedIn) {
+        return (
+            <main>
+                <p className="box account-setup-form"><Link to="/login">Log in</Link> to set up your profile.</p>
+            </main>
+        );
+    }
+
     return (
         <main>
             <form
@@ -84,7 +191,7 @@ function AccountSetup({ darkMode }) {
                                 Email
                             </label>
                             {isEditing ? (
-                                <input id="user-email" className="header-input" name="email" type="email" placeholder="e.g. username@mail.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
+                                <input id="user-email" className="header-input" name="email" type="email" placeholder="e.g. username@mail.com" value={email} readOnly title="Your login email can't be changed here" />
                             ) : (
                                 <p className="header-value">{email || "No email provided"}</p>
                             )}
@@ -117,11 +224,11 @@ function AccountSetup({ darkMode }) {
                     <div className="header-btns">
                         {isEditing ? (
                             <>
-                                <button type="button" className="header-btn" onClick={() => setIsEditing(false)}>
+                                <button type="button" className="header-btn" onClick={saveProfile}>
                                     Save Profile
                                 </button>
 
-                                <button type="button" className="header-btn" onClick={() => setIsEditing(false)}>
+                                <button type="button" className="header-btn" onClick={() => { setStatus(""); setError(""); loadPortfolio(); }}>
                                     Discard Changes
                                 </button>
                             </>
@@ -131,13 +238,21 @@ function AccountSetup({ darkMode }) {
                                     Edit Profile
                                 </button>
 
-                                <button type="button" className="header-btn" onClick={() => { console.log("Share profile clicked!"); }}>
+                                <button type="button" className="header-btn" onClick={shareProfile}>
                                     Share Profile
                                 </button>
                             </>
                         )}
                     </div>
                 </div>
+
+                {(status || error || shareUrl) && (
+                    <div className="account-status" role="status">
+                        {status && <p>{status}</p>}
+                        {error && <p className="form-error" role="alert">{error}</p>}
+                        {shareUrl && <p>Your public portfolio: <a href={shareUrl}>{shareUrl}</a></p>}
+                    </div>
+                )}
 
                 <div className="form-body">
 

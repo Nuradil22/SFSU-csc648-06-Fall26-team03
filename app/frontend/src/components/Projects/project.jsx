@@ -2,7 +2,7 @@ import { useState } from "react";
 import './project.css';
 import ProjectDescription from "./projectDescription";
 
-function Project({name, date, type, description, images, links, darkMode}) {
+function Project({name, date, type, description, images = [], links = [], owner, darkMode, children}) {
 
     // this will be used to track if each project box is collapsed or expanded
     const [expanded, setExpanded] = useState(false);
@@ -15,6 +15,7 @@ function Project({name, date, type, description, images, links, darkMode}) {
                     <h3>{date}</h3>
                     <h2>{name}</h2>
                     <h3>{type}</h3>
+                    {owner && <p className="project-owner">by {owner}</p>}
                 </div>
                 <span>{expanded ? "-" : "+"}</span>
             </button>
@@ -27,6 +28,7 @@ function Project({name, date, type, description, images, links, darkMode}) {
                         <ProjectDescription blocks={description} darkmode={darkMode}/>
                     </section>
 
+                    {images.length > 0 && (
                     <section className="project-gallery">
                         <h3>Project Gallery</h3>
 
@@ -40,14 +42,19 @@ function Project({name, date, type, description, images, links, darkMode}) {
                             ))}
                         </div>
                     </section>
+                    )}
 
                     {/* List all external links associated with a project */}
+                    {links.length > 0 && (
                     <section>
                         <h3>Project Links</h3>
                         {links.map((link, index) => (
                             <p key={link.url || index}><a href={link.url} target="_blank" rel="noopener noreferrer" className="project-link">{link.label}</a></p>
                         ))}
                     </section>
+                    )}
+
+                    {children && <div className="project-actions">{children}</div>}
 
                 </div>
             )}
