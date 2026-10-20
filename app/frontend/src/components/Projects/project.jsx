@@ -1,8 +1,9 @@
 import { useState } from "react";
 import './project.css';
 import ProjectDescription from "./projectDescription";
+import ModelViewer from "../ModelViewer/ModelViewer";
 
-function Project({name, date, type, description, images = [], links = [], owner, darkMode, children}) {
+function Project({name, date, type, description, images = [], links = [], model, owner, darkMode, children}) {
 
     // this will be used to track if each project box is collapsed or expanded
     const [expanded, setExpanded] = useState(false);
@@ -41,6 +42,14 @@ function Project({name, date, type, description, images = [], links = [], owner,
                                 </a>
                             ))}
                         </div>
+                    </section>
+                    )}
+
+                    {/* Optional interactive 3D model, shown only when the project has one */}
+                    {model && (
+                    <section className="project-model">
+                        <h3>3D Model</h3>
+                        <ModelViewer modelUrl={model} />
                     </section>
                     )}
 
