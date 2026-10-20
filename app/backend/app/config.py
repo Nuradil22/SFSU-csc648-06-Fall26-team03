@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
     allowed_origins: str = "http://localhost:5173"
+    # Also allowed, so teammates can run the frontend locally (on any Vite port)
+    # against the deployed API. Safe because auth uses bearer tokens, not cookies.
+    # Set to an empty string to turn it off.
+    allowed_origin_regex: str = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
 
     # Where the React app lives; used to build shareable portfolio links (R17.1).
     frontend_url: str = "http://localhost:5173"
