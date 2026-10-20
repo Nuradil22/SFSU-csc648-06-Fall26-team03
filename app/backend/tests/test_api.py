@@ -143,7 +143,7 @@ def test_projects_media_and_models(client, auth):
     assert client.delete(f"/projects/{pid}/model", headers=auth).status_code == 204
     assert client.get(f"/projects/{pid}", headers=auth).json()["model_3d"] is None
     assert client.delete(f"/projects/{pid}", headers=auth).status_code == 204
-    assert client.get("/projects", headers=auth).json() == []
+    assert client.get("/projects/mine", headers=auth).json() == []
 
 
 # --- R17: sharing ------------------------------------------------------------
@@ -223,3 +223,44 @@ def test_guidance_schema_is_strict_json_schema_compatible():
     schema = GuidanceContent.model_json_schema()
     for definition in [schema, *schema.get("$defs", {}).values()]:
         assert set(definition["required"]) == set(definition["properties"])
+
+
+# --- Public browse / search --------------------------------------------------
+
+def test_search_projects(client, auth):
+    other = signup(client, email="other@sfsu.edu", name="Riley")
+    client.post("/projects", headers=auth, json={
+        "title": "Line Following Robot", "subject": "Embedded Systems", "technologies": ["C", "Raspberry Pi"],
+        "description": "Autonomous car that follows a line.",
+    })
+    client.post("/projects", headers=auth, json={"title": "Budget App", "subject": "Web Development",
+                                                 "technologies": ["React", "Python"]})
+    client.post("/projects", headers=other, json={"title": "Secret robot", "technologies": ["C"]})
+
+    # Nothing is public until the owner turns sharing on.
+    assert client.get("/projects").json() == []
+    client.post("/portfolio/me/share", headers=auth)
+
+    everything = client.get("/projects").json()
+    assert [p["title"] for p in everything] == ["Budget App", "Line Following Robot"]
+    assert everything[0]["owner_name"] == "Sam Student" and everything[0]["share_token"]
+
+    def titles(**params):
+        return [p["title"] for p in client.get("/projects", params=params).json()]
+
+    assert titles(search="robot") == ["Line Following Robot"]          # title, and Riley's isn't shared
+    assert titles(search="raspberry") == ["Line Following Robot"]      # technologies
+    assert titles(search="autonomous") == ["Line Following Robot"]     # description
+    assert titles(search="python react") == ["Budget App"]             # every word must match
+    assert titles(search="robot react") == []
+    assert titles(search="100%") == []                                 # wildcards are escaped
+    assert titles(category="web development") == ["Budget App"]
+    assert titles(limit=1, offset=1) == ["Line Following Robot"]
+
+
+def test_update_three_fields_persists(client, auth):
+    pid = client.post("/projects", headers=auth, json={"title": "Old", "description": "Old desc", "subject": "Old cat"}).json()["id"]
+    r = client.patch(f"/projects/{pid}", headers=auth, json={"title": "New", "description": "New desc", "subject": "Robotics"})
+    assert r.status_code == 200
+    saved = client.get(f"/projects/{pid}", headers=auth).json()
+    assert (saved["title"], saved["description"], saved["subject"]) == ("New", "New desc", "Robotics")
