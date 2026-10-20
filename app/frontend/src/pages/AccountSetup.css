@@ -228,3 +228,7 @@
 .entry-card button {
     align-self: flex-start;
 }
+
+.account-status {
+    padding: 0 1rem;
+}

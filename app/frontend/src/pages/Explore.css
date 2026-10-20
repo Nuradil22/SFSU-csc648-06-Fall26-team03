@@ -1,0 +1,15 @@
+.explore-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem auto;
+    padding: 1rem 2rem;
+    width: 88%;
+}
+
+.explore-search input {
+    flex: 1 1 12rem;
+    padding: 0.5rem;
+    font: inherit;
+}
