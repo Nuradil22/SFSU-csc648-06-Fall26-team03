@@ -264,3 +264,23 @@ def test_update_three_fields_persists(client, auth):
     assert r.status_code == 200
     saved = client.get(f"/projects/{pid}", headers=auth).json()
     assert (saved["title"], saved["description"], saved["subject"]) == ("New", "New desc", "Robotics")
+
+
+# --- CORS ---------------------------------------------------------------------
+
+def test_cors_allows_local_frontends(client):
+    def preflight(origin):
+        return client.options("/projects", headers={
+            "Origin": origin, "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        })
+
+    for origin in ("http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173"):
+        r = preflight(origin)
+        assert r.status_code == 200, origin
+        assert r.headers["access-control-allow-origin"] == origin
+        assert client.get("/projects", headers={"Origin": origin}).headers["access-control-allow-origin"] == origin
+
+    for origin in ("https://evil.example.com", "http://localhost.evil.com", "http://localhost:5173.evil.com"):
+        assert preflight(origin).status_code == 400, origin
+        assert "access-control-allow-origin" not in client.get("/projects", headers={"Origin": origin}).headers
