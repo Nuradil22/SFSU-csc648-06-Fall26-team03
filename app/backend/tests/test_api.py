@@ -284,3 +284,65 @@ def test_cors_allows_local_frontends(client):
     for origin in ("https://evil.example.com", "http://localhost.evil.com", "http://localhost:5173.evil.com"):
         assert preflight(origin).status_code == 400, origin
         assert "access-control-allow-origin" not in client.get("/projects", headers={"Origin": origin}).headers
+
+
+# --- Certificates and job preferences ---------------------------------------------
+
+def test_certificates_and_job_preferences(client, auth):
+    cert = client.post("/portfolio/me/certificates", headers=auth, json={
+        "name": "AWS Cloud Practitioner", "issuer": "Amazon Web Services", "issue_year": 2025,
+        "credential_url": "https://aws.amazon.com/verify/abc",
+    })
+    assert cert.status_code == 201, cert.text
+    cid = cert.json()["id"]
+    assert client.patch(f"/portfolio/me/certificates/{cid}", headers=auth, json={"issue_year": 2026}).json()["issue_year"] == 2026
+    assert client.post("/portfolio/me/certificates", headers=auth, json={"name": ""}).status_code == 422
+    assert client.post("/portfolio/me/certificates", headers=auth, json={"name": "X", "issue_year": 1800}).status_code == 422
+    assert client.patch(f"/portfolio/me/certificates/{cid}", headers=auth, json={"name": None}).status_code == 422
+
+    job = client.post("/portfolio/me/job-preferences", headers=auth, json={
+        "role": "Frontend Developer", "location": "Remote", "employment_type": "Internship", "min_salary": 70000,
+    })
+    assert job.status_code == 201, job.text
+    jid = job.json()["id"]
+    assert client.patch(f"/portfolio/me/job-preferences/{jid}", headers=auth, json={"employment_type": "Full-time"}).json()["employment_type"] == "Full-time"
+    assert client.post("/portfolio/me/job-preferences", headers=auth, json={"role": "X", "employment_type": "Gig"}).status_code == 422
+    assert client.post("/portfolio/me/job-preferences", headers=auth, json={"role": "X", "min_salary": -5}).status_code == 422
+
+    mine = client.get("/portfolio/me", headers=auth).json()
+    assert [c["name"] for c in mine["certificates"]] == ["AWS Cloud Practitioner"]
+    assert mine["job_preferences"][0]["min_salary"] == 70000
+
+    # Shared portfolio shows certificates but never job preferences (salary is private).
+    token = client.post("/portfolio/me/share", headers=auth).json()["share_token"]
+    public = client.get(f"/public/portfolios/{token}").json()
+    assert public["certificates"][0]["issuer"] == "Amazon Web Services"
+    assert "job_preferences" not in public
+
+    # Other students can't touch them.
+    other = signup(client, email="other@sfsu.edu")
+    assert client.delete(f"/portfolio/me/certificates/{cid}", headers=other).status_code == 404
+    assert client.patch(f"/portfolio/me/job-preferences/{jid}", headers=other, json={"role": "Hacked"}).status_code == 404
+
+    assert client.delete(f"/portfolio/me/certificates/{cid}", headers=auth).status_code == 204
+    assert client.delete(f"/portfolio/me/job-preferences/{jid}", headers=auth).status_code == 204
+    assert client.get("/portfolio/me", headers=auth).json()["certificates"] == []
+
+
+def test_ai_payload_includes_certificates_not_salary(client, auth):
+    client.post("/portfolio/me/certificates", headers=auth, json={"name": "CompTIA Security+"})
+    client.post("/portfolio/me/job-preferences", headers=auth, json={
+        "role": "Security Analyst", "location": "Oakland, CA", "min_salary": 98765,
+    })
+    from app.database import SessionLocal
+    from app import models
+    with SessionLocal() as db:
+        payload = ai.build_portfolio_payload(db.query(models.Portfolio).one())
+    text = json.dumps(payload)
+    assert "CompTIA Security+" in text and "Security Analyst" in text
+    assert "98765" not in text and "Oakland" not in text
+
+    # A certificate alone is enough to request guidance, and the role shows up as a path.
+    r = client.post("/guidance", headers=auth)
+    assert r.status_code == 201, r.text
+    assert "Security Analyst" in [p["title"] for p in r.json()["career_paths"]]

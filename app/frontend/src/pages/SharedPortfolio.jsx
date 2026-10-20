@@ -68,6 +68,24 @@ function SharedPortfolio({ darkMode }) {
                 </section>
             )}
 
+            {portfolio.certificates.length > 0 && (
+                <section className="box shared-section">
+                    <h2>Certificates</h2>
+                    {portfolio.certificates.map((cert) => (
+                        <div key={cert.id} className="shared-entry">
+                            <h3>
+                                {cert.credential_url
+                                    ? <a href={cert.credential_url} target="_blank" rel="noopener noreferrer">{cert.name}</a>
+                                    : cert.name}
+                            </h3>
+                            {(cert.issuer || cert.issue_year) && (
+                                <p>{[cert.issuer, cert.issue_year].filter(Boolean).join(" · ")}</p>
+                            )}
+                        </div>
+                    ))}
+                </section>
+            )}
+
             {portfolio.skills.length > 0 && (
                 <section className="box shared-section">
                     <h2>Skills</h2>

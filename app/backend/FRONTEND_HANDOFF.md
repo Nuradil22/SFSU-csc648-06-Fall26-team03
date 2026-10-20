@@ -43,8 +43,8 @@ sharing turned on.
 **Category** is the project's `subject` field (the "Subject / Field" input on the
 Create Project page).
 
-The full list (education, skills, experience, images, 3D models, AI guidance,
-sharing) is in [README.md](README.md#endpoints).
+The full list (education, skills, experience, certificates, job preferences,
+images, 3D models, AI guidance, sharing) is in [README.md](README.md#endpoints).
 
 ## Sample responses
 
@@ -160,13 +160,15 @@ Response, and the same values from `GET /projects/13` afterwards, showing that t
 
 ## Database
 
-10 tables in Supabase Postgres. Full DDL in [`schema.sql`](schema.sql).
+12 tables in Supabase Postgres. Full DDL in [`schema.sql`](schema.sql).
 
 ```
 users 1──1 portfolios 1──* portfolio_links
                        1──* education
                        1──* skills
                        1──* experiences
+                       1──* certificates
+                       1──* job_preferences   (private: never in shared portfolios)
                        1──* career_guidance
                        1──* projects 1──* project_media   (images + links)
                                      1──0..1 project_models (3D model)
