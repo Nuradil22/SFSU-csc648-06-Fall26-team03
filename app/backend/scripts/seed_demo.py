@@ -172,9 +172,12 @@ def main() -> None:
         check(client.get("/health"), "reach the API")
         print(f"Seeding {args.api}")
         created = [s for s in STUDENTS if seed_student(client, s, password)]
-        total = len(client.get("/projects", params={"limit": 100}).json())
+        browse = client.get("/projects", params={"limit": 100})
 
-    print(f"\nDone. {total} projects are now searchable at {args.api.rstrip('/')}/projects")
+    if browse.status_code == 200:
+        print(f"\nDone. {len(browse.json())} projects are now searchable at {args.api.rstrip('/')}/projects")
+    else:
+        print(f"\nDone, but GET /projects returned {browse.status_code}: this API version has no public search yet.")
     if created:
         print(f"Demo login password for the new accounts: {password}")
         print("Demo emails: " + ", ".join(s["email"] for s in created))
