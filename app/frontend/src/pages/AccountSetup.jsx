@@ -3,14 +3,108 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./AccountSetup.css";
 import defaultPfp from "../assets/Team/generic-icon.png";
-import { education, enableSharing, getMyPortfolio, getToken, saveAuth, skills as skillsApi, updateMyPortfolio } from "../lib/api";
+import {
+    certificates as certificatesApi,
+    education as educationApi,
+    enableSharing,
+    getMyPortfolio,
+    getToken,
+    jobPreferences as jobPreferencesApi,
+    saveAuth,
+    skills as skillsApi,
+    updateMyPortfolio,
+} from "../lib/api";
 
-// The form only asks for a graduation year; the API stores a date.
-const yearToDate = (year) => (year ? `${year}-05-31` : null);
+const toText = (value) => (value === null || value === undefined ? "" : String(value));
+const toNumber = (value) => (toText(value).trim() === "" ? null : Number(value));
+const validYear = (year) => Number.isInteger(Number(year)) && Number(year) >= 1950 && Number(year) <= 2100;
+
+// How each list on this page maps to the API: which portfolio field it loads
+// from, how a server record becomes form fields (and back), and when a row is
+// blank (blank new rows are skipped; blanked-out saved rows are deleted).
+const SECTIONS = {
+    skills: {
+        api: skillsApi,
+        portfolioKey: "skills",
+        fromApi: (skill) => ({ name: skill.name }),
+        toApi: (entry) => ({ name: entry.name.trim() }),
+        isBlank: (entry) => !entry.name.trim(),
+    },
+    degrees: {
+        api: educationApi,
+        portfolioKey: "education",
+        // The form has one "Degree" box holding degree and major together
+        // (e.g. "B.S. Computer Science"), so major is folded into it, and only a
+        // graduation year is asked for.
+        fromApi: (edu) => ({
+            degree: [edu.degree, edu.major].filter(Boolean).join(" "),
+            institution: edu.school_name,
+            year: edu.graduation_date ? edu.graduation_date.slice(0, 4) : "",
+        }),
+        toApi: (entry) => ({
+            school_name: entry.institution.trim(),
+            degree: entry.degree.trim() || null,
+            major: null,
+            graduation_date: entry.year ? `${entry.year}-05-31` : null,
+        }),
+        isBlank: (entry) => !entry.degree.trim() && !entry.institution.trim(),
+        validate: (entry) =>
+            (!entry.institution.trim() && "Each degree needs an institution.") ||
+            (entry.year && !validYear(entry.year) && "Graduation year must be between 1950 and 2100."),
+    },
+    certificates: {
+        api: certificatesApi,
+        portfolioKey: "certificates",
+        fromApi: (cert) => ({ name: cert.name, issuer: toText(cert.issuer), year: toText(cert.issue_year) }),
+        toApi: (entry) => ({ name: entry.name.trim(), issuer: entry.issuer.trim() || null, issue_year: toNumber(entry.year) }),
+        isBlank: (entry) => !entry.name.trim() && !entry.issuer.trim(),
+        validate: (entry) =>
+            (!entry.name.trim() && "Each certificate needs a name.") ||
+            (entry.year && !validYear(entry.year) && "Certificate year must be between 1950 and 2100."),
+    },
+    jobPreferences: {
+        api: jobPreferencesApi,
+        portfolioKey: "job_preferences",
+        fromApi: (job) => ({
+            role: job.role,
+            location: toText(job.location),
+            employmentType: toText(job.employment_type),
+            salary: toText(job.min_salary),
+        }),
+        toApi: (entry) => ({
+            role: entry.role.trim(),
+            location: entry.location.trim() || null,
+            employment_type: entry.employmentType || null,
+            min_salary: toNumber(entry.salary),
+        }),
+        isBlank: (entry) => !entry.role.trim() && !entry.location.trim() && !entry.employmentType && !toText(entry.salary).trim(),
+        validate: (entry) =>
+            (!entry.role.trim() && "Each job preference needs a desired role.") ||
+            (toText(entry.salary).trim() && !(Number(entry.salary) >= 0 && Number(entry.salary) <= 10_000_000) &&
+                "Minimum salary must be between $0 and $10,000,000."),
+    },
+};
+
+// Saves one list: deletes removed rows, adds new ones, updates changed ones.
+async function syncSection(section, entries, savedEntries) {
+    const remaining = new Map(savedEntries.map((entry) => [entry.id, entry]));
+    for (const entry of entries) {
+        const old = entry.saved ? savedEntries.find((savedEntry) => savedEntry.id === entry.id) : null;
+        if (section.isBlank(entry)) continue;
+        if (old) remaining.delete(entry.id);
+        const fields = section.toApi(entry);
+        if (!old) await section.api.add(fields);
+        else if (JSON.stringify(fields) !== JSON.stringify(section.toApi(old))) await section.api.update(entry.id, fields);
+    }
+    for (const id of remaining.keys()) {
+        await section.api.remove(id);
+    }
+}
 
 function AccountSetup({ darkMode }) {
     const [isEditing, setIsEditing] = useState(true);
 
+    // Profile pictures aren't stored by the backend yet, so this stays local.
     const [profilePic, setProfilePic] = useState(defaultPfp);
 
     const [name, setName] = useState("");
@@ -25,10 +119,9 @@ function AccountSetup({ darkMode }) {
 
     const [newSkill, setNewSkill] = useState("");
 
-    // Skills and degrees as last loaded from the server (`saved: true`), used to
-    // work out what to add, change, or delete on save. Certificates, job
-    // preferences, and the profile picture aren't stored by the backend yet.
-    const [saved, setSaved] = useState({ skills: [], degrees: [] });
+    // Each list as last loaded from the server (rows have `saved: true`), used to
+    // work out what to add, change, or delete on save.
+    const [saved, setSaved] = useState({ skills: [], degrees: [], certificates: [], jobPreferences: [] });
     const [status, setStatus] = useState("");
     const [error, setError] = useState("");
     const [shareUrl, setShareUrl] = useState("");
@@ -38,20 +131,21 @@ function AccountSetup({ darkMode }) {
         setName(portfolio.name);
         setEmail(portfolio.email);
         setLocation(portfolio.location || "");
-        const savedSkills = portfolio.skills.map((skill) => ({ id: skill.id, name: skill.name, category: skill.category, saved: true }));
-        const savedDegrees = portfolio.education.map((edu) => ({
-            id: edu.id,
-            degree: [edu.degree, edu.major].filter(Boolean).join(" ") || "",
-            institution: edu.school_name,
-            year: edu.graduation_date ? edu.graduation_date.slice(0, 4) : "",
-            saved: true,
-        }));
-        setSkills(savedSkills);
-        setDegrees(savedDegrees);
-        setSaved({ skills: savedSkills, degrees: savedDegrees });
+
+        const loaded = {};
+        for (const [key, section] of Object.entries(SECTIONS)) {
+            loaded[key] = portfolio[section.portfolioKey].map((record) => ({ id: record.id, ...section.fromApi(record), saved: true }));
+        }
+        setSkills(loaded.skills);
+        setDegrees(loaded.degrees);
+        setCertificates(loaded.certificates);
+        setJobPreferences(loaded.jobPreferences);
+        setSaved(loaded);
+
         setShareUrl(portfolio.share_url ? `${window.location.origin}${new URL(portfolio.share_url).pathname}` : "");
         // Brand-new accounts (straight from sign-up) start in edit mode.
-        setIsEditing(!(portfolio.location || portfolio.skills.length || portfolio.education.length));
+        const hasProfile = portfolio.location || Object.values(SECTIONS).some((section) => portfolio[section.portfolioKey].length);
+        setIsEditing(!hasProfile);
     }, []);
 
     const loadPortfolio = useCallback(
@@ -66,39 +160,23 @@ function AccountSetup({ darkMode }) {
 
     async function saveProfile() {
         setError("");
+        const current = { skills, degrees, certificates, jobPreferences };
+
+        for (const [key, section] of Object.entries(SECTIONS)) {
+            const problem = current[key].map((entry) => !section.isBlank(entry) && section.validate?.(entry)).find(Boolean);
+            if (problem) {
+                setError(problem);
+                return;
+            }
+        }
+
         setStatus("Saving...");
         try {
-            for (const degree of degrees) {
-                if (!degree.institution.trim()) throw new Error("Each degree needs an institution.");
-            }
-
             const portfolio = await updateMyPortfolio({ name: name.trim(), location: location.trim() || null });
             saveAuth({ access_token: getToken(), user: { ...JSON.parse(localStorage.getItem("user") || "{}"), name: portfolio.name } });
 
-            const keptSkills = new Set(skills.filter((skill) => skill.saved).map((skill) => skill.id));
-            for (const skill of saved.skills.filter((skill) => !keptSkills.has(skill.id))) {
-                await skillsApi.remove(skill.id);
-            }
-            for (const skill of skills) {
-                const old = saved.skills.find((savedSkill) => savedSkill.id === skill.id);
-                if (!skill.name.trim()) continue;
-                if (!old) await skillsApi.add({ name: skill.name.trim() });
-                else if (old.name !== skill.name) await skillsApi.update(skill.id, { name: skill.name.trim() });
-            }
-
-            const keptDegrees = new Set(degrees.filter((degree) => degree.saved).map((degree) => degree.id));
-            for (const degree of saved.degrees.filter((degree) => !keptDegrees.has(degree.id))) {
-                await education.remove(degree.id);
-            }
-            for (const degree of degrees) {
-                // The form has one "Degree" box holding degree and major together
-                // (e.g. "B.S. Computer Science"), so major is folded into it.
-                const fields = { school_name: degree.institution.trim(), degree: degree.degree.trim() || null, major: null, graduation_date: yearToDate(degree.year) };
-                const old = saved.degrees.find((savedDegree) => savedDegree.id === degree.id);
-                if (!old) await education.add(fields);
-                else if (old.degree !== degree.degree || old.institution !== degree.institution || old.year !== degree.year) {
-                    await education.update(degree.id, fields);
-                }
+            for (const [key, section] of Object.entries(SECTIONS)) {
+                await syncSection(section, current[key], saved[key]);
             }
 
             await loadPortfolio();
@@ -106,6 +184,9 @@ function AccountSetup({ darkMode }) {
         } catch (err) {
             setStatus("");
             setError(err.message);
+            // Some rows may have saved before the error; reload so the next save
+            // doesn't add them twice. Keep the form open with the error showing.
+            await getMyPortfolio().then((portfolio) => { applyPortfolio(portfolio); setIsEditing(true); }).catch(() => {});
         }
     }
 

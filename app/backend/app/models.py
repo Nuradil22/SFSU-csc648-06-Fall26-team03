@@ -76,6 +76,14 @@ class Portfolio(TimestampMixin, Base):
         back_populates="portfolio", cascade="all, delete-orphan", passive_deletes=True,
         order_by="Project.display_order, Project.id.desc()",
     )
+    certificates: Mapped[list["Certificate"]] = relationship(
+        back_populates="portfolio", cascade="all, delete-orphan", passive_deletes=True,
+        order_by="Certificate.issue_year.desc(), Certificate.id",
+    )
+    job_preferences: Mapped[list["JobPreference"]] = relationship(
+        back_populates="portfolio", cascade="all, delete-orphan", passive_deletes=True,
+        order_by="JobPreference.id",
+    )
     guidance: Mapped[list["CareerGuidance"]] = relationship(
         back_populates="portfolio", cascade="all, delete-orphan", passive_deletes=True,
         order_by="CareerGuidance.id.desc()",
@@ -152,6 +160,44 @@ class Experience(TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     portfolio: Mapped[Portfolio] = relationship(back_populates="experiences")
+
+
+class Certificate(TimestampMixin, Base):
+    """Certifications and licenses (Account Setup page). Shown on shared portfolios."""
+
+    __tablename__ = "certificates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    issuer: Mapped[str | None] = mapped_column(String(200))
+    issue_year: Mapped[int | None] = mapped_column(Integer)
+    credential_url: Mapped[str | None] = mapped_column(String(1000))
+
+    portfolio: Mapped[Portfolio] = relationship(back_populates="certificates")
+
+
+class JobPreference(TimestampMixin, Base):
+    """The kinds of jobs a student is looking for (Account Setup page).
+
+    Private: only the owner sees these. Never included in shared portfolios, and
+    salary/location are not sent to the AI service.
+    """
+
+    __tablename__ = "job_preferences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(200), nullable=False)
+    location: Mapped[str | None] = mapped_column(String(200))
+    employment_type: Mapped[str | None] = mapped_column(String(30))
+    min_salary: Mapped[int | None] = mapped_column(Integer)
+
+    portfolio: Mapped[Portfolio] = relationship(back_populates="job_preferences")
 
 
 class Project(TimestampMixin, Base):

@@ -113,6 +113,8 @@ function sectionApi(section) {
 export const education = sectionApi('education');
 export const skills = sectionApi('skills');
 export const experience = sectionApi('experience');
+export const certificates = sectionApi('certificates');
+export const jobPreferences = sectionApi('job-preferences');
 
 // --- Projects ---
 

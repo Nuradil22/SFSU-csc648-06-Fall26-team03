@@ -40,8 +40,9 @@ class AIServiceError(Exception):
 def build_portfolio_payload(portfolio: models.Portfolio) -> dict:
     """The parts of the portfolio the analysis needs.
 
-    Deliberately leaves out the student's name, email, location, links, photo, and
-    sharing settings (NFR4: send the AI service only what it needs).
+    Deliberately leaves out the student's name, email, location, links, photo,
+    salary expectations, and sharing settings (NFR4: send the AI service only what
+    it needs).
     """
     return {
         "headline": portfolio.headline,
@@ -68,6 +69,13 @@ def build_portfolio_payload(portfolio: models.Portfolio) -> dict:
                 "description": x.description,
             }
             for x in portfolio.experiences
+        ],
+        "certificates": [
+            {"name": c.name, "issuer": c.issuer, "year": c.issue_year} for c in portfolio.certificates
+        ],
+        # Desired roles and job types only; salary and location stay private.
+        "job_preferences": [
+            {"role": j.role, "employment_type": j.employment_type} for j in portfolio.job_preferences
         ],
         "projects": [
             {
@@ -96,7 +104,7 @@ def _blocks_to_text(blocks: list[dict]) -> str:
 
 
 def has_enough_data(payload: dict) -> bool:
-    return any(payload[key] for key in ("education", "skills", "experience", "projects"))
+    return any(payload[key] for key in ("education", "skills", "experience", "certificates", "projects"))
 
 
 # ---------------------------------------------------------------------------
@@ -104,7 +112,7 @@ def has_enough_data(payload: dict) -> bool:
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = """You are a career advisor for college students using CareerGPS, a portfolio platform.
-You will receive one student's portfolio as JSON: education, skills, experience, projects, and career interests.
+You will receive one student's portfolio as JSON: education, skills, experience, certificates, projects, career interests, and the kinds of jobs they want.
 
 Produce personalized career guidance:
 - summary: 2-4 sentences on the student's academic and professional background.
@@ -171,7 +179,8 @@ def _mock_guidance(payload: dict) -> tuple[GuidanceContent, str]:
     projects = payload["projects"]
     experience = payload["experience"]
     education = payload["education"]
-    interests = payload["career_interests"]
+    # Stated career interests first, then roles from job preferences.
+    interests = list(dict.fromkeys(payload["career_interests"] + [j["role"] for j in payload["job_preferences"]]))
 
     majors = [e["major"] for e in education if e.get("major")]
     background = []

@@ -50,6 +50,21 @@ CREATE TABLE career_guidance (
 
 CREATE INDEX ix_career_guidance_portfolio_id ON career_guidance (portfolio_id);
 
+CREATE TABLE certificates (
+	id SERIAL NOT NULL,
+	portfolio_id INTEGER NOT NULL,
+	name VARCHAR(200) NOT NULL,
+	issuer VARCHAR(200),
+	issue_year INTEGER,
+	credential_url VARCHAR(1000),
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY(portfolio_id) REFERENCES portfolios (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_certificates_portfolio_id ON certificates (portfolio_id);
+
 CREATE TABLE education (
 	id SERIAL NOT NULL,
 	portfolio_id INTEGER NOT NULL,
@@ -86,6 +101,21 @@ CREATE TABLE experiences (
 );
 
 CREATE INDEX ix_experiences_portfolio_id ON experiences (portfolio_id);
+
+CREATE TABLE job_preferences (
+	id SERIAL NOT NULL,
+	portfolio_id INTEGER NOT NULL,
+	role VARCHAR(200) NOT NULL,
+	location VARCHAR(200),
+	employment_type VARCHAR(30),
+	min_salary INTEGER,
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY(portfolio_id) REFERENCES portfolios (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_job_preferences_portfolio_id ON job_preferences (portfolio_id);
 
 CREATE TABLE portfolio_links (
 	id SERIAL NOT NULL,

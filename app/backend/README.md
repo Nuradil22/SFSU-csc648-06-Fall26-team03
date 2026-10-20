@@ -90,6 +90,10 @@ PATCH bodies are partial: send only the fields you want to change.
 | PATCH/DELETE | `/portfolio/me/skills/{id}` | R5.2, R5.3 | |
 | GET/POST | `/portfolio/me/experience` | R6 | Work / internship / volunteer / academic / research / other |
 | PATCH/DELETE | `/portfolio/me/experience/{id}` | R6.3, R6.4 | |
+| GET/POST | `/portfolio/me/certificates` | | Certificates (name, issuer, year, credential URL) |
+| PATCH/DELETE | `/portfolio/me/certificates/{id}` | | |
+| GET/POST | `/portfolio/me/job-preferences` | | Desired role, location, employment type, min salary (**private**) |
+| PATCH/DELETE | `/portfolio/me/job-preferences/{id}` | | |
 | GET | `/projects` | | **Public** browse/search: `?search=`, `?category=`, `?limit=`, `?offset=` |
 | GET | `/projects/mine` | R7.5 | My projects |
 | POST | `/projects` | R7.1–R7.3 | Create a project |
@@ -138,6 +142,8 @@ PATCH bodies are partial: send only the fields you want to change.
 | `education` | school, degree, major, dates, GPA, coursework | |
 | `skills` | name, category, proficiency | |
 | `experiences` | type, organization, position, dates, description | |
+| `certificates` | name, issuer, year, credential URL | |
+| `job_preferences` | role, location, employment type, min salary (private) | |
 | `projects` | title, description, editor blocks, date, subject, technologies | 1 → many `project_media`, 1 → 0..1 `project_models` |
 | `project_media` | images and links (`media_type`) | |
 | `project_models` | 3D model URL, format, size | |

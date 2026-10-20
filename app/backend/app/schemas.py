@@ -54,6 +54,9 @@ TagList = Annotated[
 
 SkillCategory = Literal["technical", "communication", "leadership", "professional", "language", "other"]
 ExperienceType = Literal["work", "internship", "volunteer", "academic", "research", "other"]
+EmploymentType = Literal["Full-time", "Part-time", "Internship", "Contract", "Temporary"]
+Year = Annotated[int, Field(ge=1950, le=2100)]
+Salary = Annotated[int, Field(ge=0, le=10_000_000)]
 
 
 class PartialUpdate(BaseModel):
@@ -256,6 +259,58 @@ class ExperienceOut(ORMModel):
 
 
 # ---------------------------------------------------------------------------
+# Certificates and job preferences (Account Setup page)
+# ---------------------------------------------------------------------------
+
+class CertificateCreate(BaseModel):
+    name: Annotated[Text, Field(min_length=1, max_length=200)]
+    issuer: Annotated[Text, Field(max_length=200)] | None = None
+    issue_year: Year | None = None
+    credential_url: Url | None = None
+
+
+class CertificateUpdate(PartialUpdate):
+    _required = ("name",)
+
+    name: Annotated[Text, Field(min_length=1, max_length=200)] | None = None
+    issuer: Annotated[Text, Field(max_length=200)] | None = None
+    issue_year: Year | None = None
+    credential_url: Url | None = None
+
+
+class CertificateOut(ORMModel):
+    id: int
+    name: str
+    issuer: str | None
+    issue_year: int | None
+    credential_url: str | None
+
+
+class JobPreferenceCreate(BaseModel):
+    role: Annotated[Text, Field(min_length=1, max_length=200)]
+    location: Annotated[Text, Field(max_length=200)] | None = None
+    employment_type: EmploymentType | None = None
+    min_salary: Salary | None = None
+
+
+class JobPreferenceUpdate(PartialUpdate):
+    _required = ("role",)
+
+    role: Annotated[Text, Field(min_length=1, max_length=200)] | None = None
+    location: Annotated[Text, Field(max_length=200)] | None = None
+    employment_type: EmploymentType | None = None
+    min_salary: Salary | None = None
+
+
+class JobPreferenceOut(ORMModel):
+    id: int
+    role: str
+    location: str | None
+    employment_type: str | None
+    min_salary: int | None
+
+
+# ---------------------------------------------------------------------------
 # Projects (R7), media (R8), 3D models (R15)
 # ---------------------------------------------------------------------------
 
@@ -383,12 +438,15 @@ class PortfolioOut(ORMModel):
     education: list[EducationOut]
     skills: list[SkillOut]
     experiences: list[ExperienceOut]
+    certificates: list[CertificateOut]
+    job_preferences: list[JobPreferenceOut]
     projects: list[ProjectOut]
     updated_at: datetime
 
 
 class PublicPortfolioOut(BaseModel):
-    """What visitors see through a share link. No email, ids of owners, or settings."""
+    """What visitors see through a share link. No email, owner ids, settings, or
+    job preferences (salary expectations are private)."""
 
     name: str
     headline: str | None
@@ -400,6 +458,7 @@ class PublicPortfolioOut(BaseModel):
     education: list[EducationOut]
     skills: list[SkillOut]
     experiences: list[ExperienceOut]
+    certificates: list[CertificateOut]
     projects: list[ProjectOut]
 
 
