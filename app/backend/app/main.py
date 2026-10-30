@@ -9,6 +9,7 @@ from .config import settings
 from .database import Base, engine
 from .routers import (
     auth,
+    career_chat,
     certificates,
     education,
     experience,
@@ -28,7 +29,7 @@ for noisy in ("httpx", "httpx2"):
 # column changes to an existing table need a migration (see README).
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="CareerGPS API", version="0.2.0")
+app = FastAPI(title="Projectory API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,7 +41,7 @@ app.add_middleware(
 )
 
 for module in (
-    auth, portfolio, education, skills, experience, certificates, job_preferences, projects, guidance, public,
+    auth, portfolio, education, skills, experience, certificates, job_preferences, projects, guidance, career_chat, public,
 ):
     app.include_router(module.router)
 

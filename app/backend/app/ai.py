@@ -111,7 +111,7 @@ def has_enough_data(payload: dict) -> bool:
 # Claude provider
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are a career advisor for college students using CareerGPS, a portfolio platform.
+SYSTEM_PROMPT = """You are a career advisor for college students using Projectory, a portfolio platform.
 You will receive one student's portfolio as JSON: education, skills, experience, certificates, projects, career interests, and the kinds of jobs they want.
 
 Produce personalized career guidance:
