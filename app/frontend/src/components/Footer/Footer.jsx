@@ -10,6 +10,10 @@ function Footer(){
                     Account Setup
                 </NavLink>
 
+                <NavLink to="/account/dashboard" end>
+                    Dashboard
+                </NavLink>
+
             </div>
             <div className="footer-column">
                 <h1><span className="underline">Footer c2</span></h1>
