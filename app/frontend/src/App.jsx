@@ -16,8 +16,6 @@ import Explore from "./pages/Explore";
 import SharedPortfolio from "./pages/SharedPortfolio";
 import Dashboard from "./pages/Dashboard";
 
-import { getToken } from './lib/api';
-
 function App() {
   const [darkMode, setDarkMode] = useState(false);
 
@@ -30,9 +28,11 @@ function App() {
         />
 
         <Routes>
-          <Route path="/" element={getToken() ? <Dashboard darkMode={darkMode} /> : <About />}/>
+          <Route path="/" element={<About />} />
+          <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login darkMode={darkMode}/>} />
           <Route path="/account/setup" element={<AccountSetup darkMode={darkMode}/>} />
+          <Route path="/account/dashboard" element={<Dashboard darkMode={darkMode}/>} />
           <Route path="/roadmap" element={<Resume darkMode={darkMode}/>} />
           <Route path="/portfolio" element={<Portfolio darkMode={darkMode}/>} />
           <Route path="/projects/new" element={<CreateProject darkMode={darkMode}/>} />
