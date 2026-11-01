@@ -18,7 +18,7 @@ function LoginForm({ isReturningUser, setIsReturningUser }) {
         try {
             const data = await login({ email, password });
             saveAuth(data);
-            navigate('/');
+            navigate('/account/dashboard');
         } catch (err) {
             setError(err.message);
         } finally {
