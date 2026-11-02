@@ -33,6 +33,18 @@ function Portfolio ({ darkMode }){
         }
     }
 
+    // placeholder:
+    // Ali, please replace this with the backend update call when project visibility is supported.
+    function handleVisibilityToggle(projectId) {
+        setProjects((current) =>
+            current.map((project) =>
+                project.id === projectId
+                    ? { ...project, is_public: !project.is_public }
+                    : project
+            )
+        );
+    }
+
     if (!isLoggedIn) {
         return (
             <main>
@@ -65,8 +77,21 @@ function Portfolio ({ darkMode }){
                 <div className="project-box">
                     {projects.map(project => (
                     <Project key={project.id} {...toProjectProps(project)} darkMode={darkMode}>
-                        <button type="button" onClick={() => navigate(`/projects/${project.id}/edit`)}>Edit</button>
-                        <button type="button" onClick={() => handleDelete(project)}>Delete</button>
+                        <button className="portfolio-button" type="button" onClick={() => navigate(`/projects/${project.id}/edit`)}>Edit</button>
+                        <button className="portfolio-button" type="button" onClick={() => handleDelete(project)}>Delete</button>
+                        <h3>Make Project Publicly Visible:</h3>
+                        <button type="button" className={`toggle ${project.is_public ? "on" : ""}`}
+                            onClick={() => handleVisibilityToggle(project.id)}
+                            role="switch" aria-checked={Boolean(project.is_public)}
+                            aria-label={`Make ${project.title} ${
+                                project.is_public ? "private" : "public"
+                            }`}
+
+                            title={project.is_public ? "Public" : "Private"}
+                        >
+                            <span className="toggle-knob" />
+                        </button>
+                        
                     </Project>
                 ))}
                 </div>
@@ -75,6 +100,8 @@ function Portfolio ({ darkMode }){
                 <button className="box project-card create-project-card project-box" onClick={() => navigate("/projects/new")}>
                     <h2>Create New Project !!</h2>
                 </button>
+
+
 
             </div>
         </main>

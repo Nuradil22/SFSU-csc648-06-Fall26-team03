@@ -104,10 +104,10 @@
     width: 54px;
     height: 30px;
     padding: 3px;
-    margin: 24px 1rem 0 1rem; 
+    margin: 1rem 1rem 0 0; 
     border: none;
     border-radius: 999px;
-    background-color: #44a8d6;
+    background-color: lightgray;
     cursor: pointer;
 
     display: flex;
