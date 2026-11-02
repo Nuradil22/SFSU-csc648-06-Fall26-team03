@@ -1,452 +1,363 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-    getToken,
-    getCurrentUser,
-    getMyPortfolio,
-    getMyProjects
-} from "../lib/api";
 
 import "./Dashboard.css";
-
-function formatDate(date) {
-    if (!date) return "Date unavailable";
-
-    const parsed = new Date(date);
-
-    if (Number.isNaN(parsed.getTime())) return "Date unavailable";
-
-    return parsed.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-    });
-}
+import {
+    getCurrentUser,
+    getMyPortfolio,
+    getMyProjects,
+    getToken
+} from "../lib/api";
 
 function Dashboard({ darkMode }) {
-    const [user, setUser] = useState(() => getCurrentUser());
+    const isLoggedIn = Boolean(getToken());
+    const user = getCurrentUser();
+
     const [portfolio, setPortfolio] = useState(null);
     const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(isLoggedIn);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        let isMounted = true;
+        if (!isLoggedIn) return;
+
+        let cancelled = false;
 
         async function loadDashboard() {
-            if (!getToken()) {
-                setError("Please log in to view your dashboard.");
-                setLoading(false);
-                return;
+            const results = await Promise.allSettled([
+                getMyPortfolio(),
+                getMyProjects()
+            ]);
+
+            if (cancelled) return;
+
+            if (results[0].status === "fulfilled") {
+                setPortfolio(results[0].value);
             }
 
-            try {
-                const [portfolioResult, projectsResult] =
-                    await Promise.allSettled([
-                        getMyPortfolio(),
-                        getMyProjects()
-                    ]);
-
-                if (!isMounted) return;
-
-                if (portfolioResult.status === "fulfilled") {
-                    setPortfolio(portfolioResult.value);
-                }
-
-                if (projectsResult.status === "fulfilled") {
-                    const result = projectsResult.value;
-                    setProjects(Array.isArray(result) ? result : []);
-                }
-
-                if (
-                    portfolioResult.status === "rejected" &&
-                    projectsResult.status === "rejected"
-                ) {
-                    setError("Unable to load your dashboard. Please try again.");
-                } else if (portfolioResult.status === "rejected") {
-                    console.error("Portfolio request failed:", portfolioResult.reason);
-                } else if (projectsResult.status === "rejected") {
-                    console.error("Projects request failed:", projectsResult.reason);
-                }
-
-            } catch (err) {
-                if (isMounted) {
-                    setError(err.message || "Something went wrong.");
-                }
-            } finally {
-                if (isMounted) setLoading(false);
+            if (results[1].status === "fulfilled") {
+                setProjects(
+                    Array.isArray(results[1].value)
+                        ? results[1].value
+                        : []
+                );
             }
+
+            const failures = results.filter(
+                result => result.status === "rejected"
+            );
+
+            if (failures.length === 2) {
+                setError(failures[0].reason.message);
+            } else if (failures.length === 1) {
+                setError(
+                    `Some dashboard information couldn't load: ${failures[0].reason.message}`
+                );
+            }
+
+            setLoading(false);
         }
 
         loadDashboard();
 
         return () => {
-            isMounted = false;
+            cancelled = true;
         };
-    }, []);
+    }, [isLoggedIn]);
 
-    const displayName =
-        portfolio?.name ||
-        user?.name ||
-        "there";
-
-    // Portfolio data
-    const education = portfolio?.education || [];
-    const skills = portfolio?.skills || [];
-    const experiences = portfolio?.experiences || [];
-    const certificates = portfolio?.certificates || [];
-
-    // Profile completion
-    const profileItems = [
-        {
-            label: "Basic information",
-            complete: Boolean(portfolio?.name && portfolio?.email)
-        },
-        {
-            label: "Professional headline",
-            complete: Boolean(portfolio?.headline?.trim())
-        },
-        {
-            label: "Biography",
-            complete: Boolean(portfolio?.bio?.trim())
-        },
-        {
-            label: "Profile picture",
-            complete: Boolean(portfolio?.profile_image_url)
-        },
-        {
-            label: "Add your skills",
-            complete: skills.length > 0
-        },
-        {
-            label: "Add your education",
-            complete: education.length > 0
-        },
-        {
-            label: "Add your experience",
-            complete: experiences.length > 0
-        },
-        {
-            label: "Add a certificate",
-            complete: certificates.length > 0
-        }
-    ];
-
-    const completedItems = profileItems.filter(
-        item => item.complete
-    ).length;
-
-    const profileProgress = Math.round(
-        (completedItems / profileItems.length) * 100
-    );
-
-    // Sort projects by last updated
-    const recentProjects = [...projects]
-        .sort((a, b) => {
-            const dateA = new Date(a.updated_at || a.created_at || 0);
-            const dateB = new Date(b.updated_at || b.created_at || 0);
-            return dateB - dateA;
-        })
-        .slice(0, 3);
-
-    if (loading) {
+    if (!isLoggedIn) {
         return (
-            <main className={`dashboard ${darkMode ? "dark" : ""}`}>
-                <div className="dashboard-message">
-                    <h2>Loading your dashboard...</h2>
-                    <p>Getting your projects and profile information.</p>
+            <main>
+                <div className="banner">
+                    <h1 className="banner-title">Dashboard</h1>
+                </div>
+
+                <div className="dashboard-body">
+                    <div className="box dashboard-section">
+                        <h2 className="box-header">Welcome!</h2>
+                        <p>
+                            <Link to="/login">Log in</Link> to view your dashboard.
+                        </p>
+                    </div>
                 </div>
             </main>
         );
     }
 
-    if (error && !portfolio && projects.length === 0) {
-        return (
-            <main className={`dashboard ${darkMode ? "dark" : ""}`}>
-                <div className="dashboard-message">
-                    <h2>Unable to load dashboard</h2>
-                    <p>{error}</p>
-                    <Link to="/login" className="dashboard-primary-btn">
-                        Go to Login
-                    </Link>
-                </div>
-            </main>
-        );
+    const name = portfolio?.name || user?.name || "Student";
+
+    const skills = portfolio?.skills || [];
+    const education = portfolio?.education || [];
+    const certificates = portfolio?.certificates || [];
+    const jobPreferences = portfolio?.job_preferences || [];
+
+    // These are the actual sections users can complete in Account Setup.
+    const profileSections = [
+        Boolean(portfolio?.name),
+        Boolean(portfolio?.email),
+        Boolean(portfolio?.location),
+        education.length > 0,
+        certificates.length > 0,
+        skills.length > 0,
+        jobPreferences.length > 0
+    ];
+
+    const completedSections = profileSections.filter(Boolean).length;
+    const profileProgress = Math.round(
+        (completedSections / profileSections.length) * 100
+    );
+
+    const recentProjects = [...projects]
+        .sort((a, b) =>
+            new Date(b.updated_at || b.created_at || 0) -
+            new Date(a.updated_at || a.created_at || 0)
+        )
+        .slice(0, 3);
+
+    function formatDate(date) {
+        if (!date) return "Date unavailable";
+
+        const parsed = new Date(date);
+
+        if (Number.isNaN(parsed.getTime())) return "Date unavailable";
+
+        return parsed.toLocaleDateString();
     }
 
     return (
-        <main className={`dashboard ${darkMode ? "dark" : ""}`}>
+        <main>
+            <div className="banner">
+                <h1 className="banner-title">Welcome Back, {name}!</h1>
+                <p>Your Projectory Dashboard</p>
+            </div>
 
-            {/* Welcome Header */}
-            <section className="dashboard-welcome">
-                <div className="welcome-user">
-                    {portfolio?.profile_image_url && (
-                        <img
-                            src={portfolio.profile_image_url}
-                            alt="Profile"
-                            className="dashboard-profile-image"
-                        />
-                    )}
+            <div className="dashboard-body">
 
-                    <div>
-                        <p className="dashboard-eyebrow">
-                            YOUR PROJECTORY DASHBOARD
-                        </p>
+                {loading && <p>Loading your dashboard...</p>}
 
-                        <h1>Welcome back, {displayName}!</h1>
+                {error && (
+                    <p className="form-error" role="alert">
+                        {error}
+                    </p>
+                )}
 
-                        <p className="welcome-subtitle">
-                            {portfolio?.headline ||
-                                "Keep building your portfolio and showcasing your work."}
-                        </p>
-                    </div>
-                </div>
+                {!loading && (
+                    <>
+                        {/* Overview cards */}
+                        <section className="dashboard-stats">
+                            <div className="box dashboard-stat">
+                                <h2 className="box-header">Projects</h2>
+                                <p>{projects.length}</p>
+                                <Link to="/portfolio">View Portfolio</Link>
+                            </div>
 
-                <div className="welcome-actions">
-                    <Link to="/create-project" className="dashboard-primary-btn">
-                        + Create Project
-                    </Link>
+                            <div className="box dashboard-stat">
+                                <h2 className="box-header">Skills</h2>
+                                <p>{skills.length}</p>
+                                <Link to="/account/setup">Manage Skills</Link>
+                            </div>
 
-                    <Link to="/portfolio" className="dashboard-secondary-btn">
-                        View Portfolio
-                    </Link>
-                </div>
-            </section>
+                            <div className="box dashboard-stat">
+                                <h2 className="box-header">Certificates</h2>
+                                <p>{certificates.length}</p>
+                                <Link to="/account/setup">Manage Certificates</Link>
+                            </div>
 
-            {/* Statistics */}
-            <section className="dashboard-stats">
+                            <div className="box dashboard-stat">
+                                <h2 className="box-header">Education</h2>
+                                <p>{education.length}</p>
+                                <Link to="/account/setup">Manage Education</Link>
+                            </div>
+                        </section>
 
-                <div className="stat-card">
-                    <div className="stat-icon">📁</div>
-                    <div>
-                        <p className="stat-number">{projects.length}</p>
-                        <p className="stat-label">Total Projects</p>
-                        <p className="stat-description">Your projects</p>
-                    </div>
-                </div>
+                        {/* Profile overview */}
+                        <section className="box dashboard-section">
+                            <div className="dashboard-section-heading">
+                                <h2 className="box-header">Account Overview</h2>
+                                <Link to="/account/setup">Edit Account</Link>
+                            </div>
 
-                <div className="stat-card">
-                    <div className="stat-icon">🏆</div>
-                    <div>
-                        <p className="stat-number">{certificates.length}</p>
-                        <p className="stat-label">Certificates</p>
-                        <p className="stat-description">Credentials earned</p>
-                    </div>
-                </div>
+                            <div className="dashboard-profile-info">
+                                <div>
+                                    <h3>{name}</h3>
+                                    <p>{portfolio?.email || user?.email || "No email provided"}</p>
+                                    <p>{portfolio?.location || "No location added yet"}</p>
+                                </div>
 
-                <div className="stat-card">
-                    <div className="stat-icon">⚡</div>
-                    <div>
-                        <p className="stat-number">{skills.length}</p>
-                        <p className="stat-label">Skills</p>
-                        <p className="stat-description">Your listed skills</p>
-                    </div>
-                </div>
+                                <div className="dashboard-completion">
+                                    <h3>Profile Completion</h3>
+                                    <p>{profileProgress}%</p>
 
-                <div className="stat-card">
-                    <div className="stat-icon">👤</div>
-                    <div>
-                        <p className="stat-number">{profileProgress}%</p>
-                        <p className="stat-label">Profile Complete</p>
-                        <p className="stat-description">Keep it up!</p>
-                    </div>
-                </div>
+                                    <div className="dashboard-progress">
+                                        <div
+                                            style={{
+                                                width: `${profileProgress}%`
+                                            }}
+                                        />
+                                    </div>
 
-            </section>
+                                    <small>
+                                        {completedSections} of {profileSections.length} sections completed
+                                    </small>
+                                </div>
+                            </div>
+                        </section>
 
-            {/* Main Content */}
-            <section className="dashboard-content">
+                        {/* Education */}
+                        <section className="box dashboard-section">
+                            <div className="dashboard-section-heading">
+                                <h2 className="box-header">Education & Degrees</h2>
+                                <Link to="/account/setup">Edit</Link>
+                            </div>
 
-                {/* Recent Projects */}
-                <div className="dashboard-panel projects-panel">
-                    <div className="panel-heading">
-                        <div>
-                            <h2>Recent Projects</h2>
-                            <p>Your latest work in Projectory</p>
-                        </div>
-
-                        <Link to="/portfolio" className="panel-link">
-                            View All →
-                        </Link>
-                    </div>
-
-                    <div className="recent-projects">
-                        {recentProjects.length > 0 ? (
-                            recentProjects.map(project => (
-                                <article
-                                    className="recent-project-card"
-                                    key={project.id}
-                                >
-                                    <div className="project-thumbnail">
-                                        {project.images?.[0]?.url ? (
-                                            <img
-                                                src={project.images[0].url}
-                                                alt={project.images[0].label || project.title}
-                                            />
-                                        ) : (
-                                            <span>📁</span>
+                            {education.length === 0 ? (
+                                <p>No education information added yet.</p>
+                            ) : (
+                                education.map(item => (
+                                    <div className="dashboard-list-item" key={item.id}>
+                                        <h3>{item.degree || "Degree not specified"}</h3>
+                                        <p>{item.school_name}</p>
+                                        {item.graduation_date && (
+                                            <p>
+                                                Graduation: {item.graduation_date.slice(0, 4)}
+                                            </p>
                                         )}
                                     </div>
+                                ))
+                            )}
+                        </section>
 
-                                    <div className="project-details">
-                                        <h3>{project.title}</h3>
+                        {/* Skills and certificates */}
+                        <div className="dashboard-two-column">
+                            <section className="box dashboard-section">
+                                <div className="dashboard-section-heading">
+                                    <h2 className="box-header">My Skills</h2>
+                                    <Link to="/account/setup">Edit</Link>
+                                </div>
 
-                                        <p>
-                                            {project.subject || "Personal Project"}
-                                        </p>
-
-                                        <p className="project-date">
-                                            Updated {formatDate(
-                                                project.updated_at ||
-                                                project.created_at
-                                            )}
-                                        </p>
+                                {skills.length === 0 ? (
+                                    <p>No skills added yet.</p>
+                                ) : (
+                                    <div className="dashboard-tags">
+                                        {skills.map(skill => (
+                                            <span key={skill.id}>
+                                                {skill.name}
+                                            </span>
+                                        ))}
                                     </div>
-                                </article>
-                            ))
-                        ) : (
-                            <p className="dashboard-empty">
-                                You haven't created any projects yet.
-                                Start building your portfolio!
-                            </p>
-                        )}
-                    </div>
+                                )}
+                            </section>
 
-                    <Link to="/create-project" className="add-project-link">
-                        + Add another project
-                    </Link>
-                </div>
+                            <section className="box dashboard-section">
+                                <div className="dashboard-section-heading">
+                                    <h2 className="box-header">Certificates</h2>
+                                    <Link to="/account/setup">Edit</Link>
+                                </div>
 
-                {/* Profile Completion */}
-                <div className="dashboard-panel profile-panel">
-                    <div className="panel-heading">
-                        <div>
-                            <h2>Complete Your Profile</h2>
-                            <p>Help others get to know you.</p>
+                                {certificates.length === 0 ? (
+                                    <p>No certificates added yet.</p>
+                                ) : (
+                                    certificates.map(cert => (
+                                        <div className="dashboard-list-item" key={cert.id}>
+                                            <h3>{cert.name}</h3>
+                                            <p>{cert.issuer || "Issuer not specified"}</p>
+                                            {cert.issue_year && <p>{cert.issue_year}</p>}
+                                        </div>
+                                    ))
+                                )}
+
+                                <Link to="/resources/certificates">
+                                    Explore Certificate Programs
+                                </Link>
+                            </section>
                         </div>
-                    </div>
 
-                    <div className="progress-summary">
-                        <span>Profile progress</span>
-                        <strong>{profileProgress}%</strong>
-                    </div>
-
-                    <div className="progress-track">
-                        <div
-                            className="progress-fill"
-                            style={{ width: `${profileProgress}%` }}
-                        />
-                    </div>
-
-                    <div className="profile-checklist">
-                        {profileItems.map(item => (
-                            <div
-                                className={`checklist-item ${
-                                    item.complete ? "completed" : ""
-                                }`}
-                                key={item.label}
-                            >
-                                <span>{item.complete ? "✓" : "○"}</span>
-                                <p>{item.label}</p>
+                        {/* Career preferences */}
+                        <section className="box dashboard-section">
+                            <div className="dashboard-section-heading">
+                                <h2 className="box-header">Job Preferences</h2>
+                                <Link to="/account/setup">Edit Preferences</Link>
                             </div>
-                        ))}
-                    </div>
 
-                    <Link
-                        to="/account/setup"
-                        className="complete-profile-btn"
-                    >
-                        Edit Profile →
-                    </Link>
-                </div>
+                            {jobPreferences.length === 0 ? (
+                                <p>
+                                    You haven't added any career preferences yet.
+                                </p>
+                            ) : (
+                                jobPreferences.map(job => (
+                                    <div className="dashboard-list-item" key={job.id}>
+                                        <h3>{job.role}</h3>
+                                        <p>
+                                            {[
+                                                job.location,
+                                                job.employment_type
+                                            ].filter(Boolean).join(" • ") || "No additional preferences"}
+                                        </p>
+                                        {job.min_salary != null && (
+                                            <p>
+                                                Minimum salary: ${Number(job.min_salary).toLocaleString()}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </section>
 
-            </section>
+                        {/* Portfolio and project tracking */}
+                        <section className="box dashboard-section">
+                            <div className="dashboard-section-heading">
+                                <h2 className="box-header">My Portfolio & Projects</h2>
+                                <Link to="/portfolio">View Full Portfolio</Link>
+                            </div>
 
-            {/* Bottom Content */}
-            <section className="dashboard-bottom">
-
-                {/* Resources */}
-                <div className="dashboard-panel resources-panel">
-                    <div className="panel-heading">
-                        <div>
-                            <h2>Explore Resources</h2>
-                            <p>Find ways to grow your skills.</p>
-                        </div>
-                    </div>
-
-                    <Link
-                        to="/resources/certificates"
-                        className="resource-item"
-                    >
-                        <div className="resource-icon">🎓</div>
-
-                        <div>
-                            <h3>Certificates</h3>
                             <p>
-                                Discover credentials to strengthen your profile.
+                                You currently have {projects.length} project
+                                {projects.length === 1 ? "" : "s"} in your portfolio.
                             </p>
-                        </div>
 
-                        <span>→</span>
-                    </Link>
+                            {recentProjects.length === 0 ? (
+                                <p>You haven't added any projects yet.</p>
+                            ) : (
+                                <div className="dashboard-projects">
+                                    {recentProjects.map(project => (
+                                        <div className="dashboard-project" key={project.id}>
+                                            {project.images?.[0]?.url && (
+                                                <img
+                                                    src={project.images[0].url}
+                                                    alt={project.title}
+                                                />
+                                            )}
 
-                    <Link
-                        to="/resources/certificates"
-                        className="resource-item"
-                    >
-                        <div className="resource-icon">💡</div>
+                                            <div className="dashboard-project-details">
+                                                <h3>{project.title}</h3>
+                                                <p>{project.subject}</p>
+                                                <p>
+                                                    {project.description || "No description provided."}
+                                                </p>
+                                                <small>
+                                                    Last updated: {formatDate(project.updated_at || project.created_at)}
+                                                </small>
 
-                        <div>
-                            <h3>Learning Opportunities</h3>
-                            <p>
-                                Explore new skills and areas of interest.
-                            </p>
-                        </div>
+                                                <div>
+                                                    <Link to={`/projects/${project.id}/edit`}>
+                                                        Edit Project
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
-                        <span>→</span>
-                    </Link>
-                </div>
-
-                {/* Portfolio Summary */}
-                <div className="dashboard-panel activity-panel">
-                    <div className="panel-heading">
-                        <div>
-                            <h2>Your Portfolio</h2>
-                            <p>A quick look at your professional profile.</p>
-                        </div>
-                    </div>
-
-                    <div className="portfolio-summary-item">
-                        <span>🎓</span>
-                        <div>
-                            <h3>Education</h3>
-                            <p>{education.length} entries</p>
-                        </div>
-                    </div>
-
-                    <div className="portfolio-summary-item">
-                        <span>💼</span>
-                        <div>
-                            <h3>Experience</h3>
-                            <p>{experiences.length} entries</p>
-                        </div>
-                    </div>
-
-                    <div className="portfolio-summary-item">
-                        <span>🔗</span>
-                        <div>
-                            <h3>Profile Links</h3>
-                            <p>{portfolio?.links?.length || 0} links</p>
-                        </div>
-                    </div>
-
-                    <Link to="/account/setup" className="add-project-link">
-                        Manage Your Profile →
-                    </Link>
-                </div>
-
-            </section>
-
+                            <div className="dashboard-project-actions">
+                                <Link to="/projects/new">+ Add a Project</Link>
+                                <Link to="/portfolio">Manage Portfolio</Link>
+                            </div>
+                        </section>
+                    </>
+                )}
+            </div>
         </main>
     );
 }
