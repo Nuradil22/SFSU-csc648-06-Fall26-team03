@@ -163,3 +163,21 @@ export function addProjectLink(projectId, { label, url, link_type }) {
 export function removeProjectMedia(projectId, mediaId) {
     return request(`/projects/${projectId}/media/${mediaId}`, { method: 'DELETE', auth: true });
 }
+
+export function uploadProjectModel(projectId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return request(`/projects/${projectId}/model`, {
+        method: 'PUT',
+        formData,
+        auth: true,
+    });
+}
+
+export function removeProjectModel(projectId) {
+    return request(`/projects/${projectId}/model`, {
+        method: 'DELETE',
+        auth: true,
+    });
+}

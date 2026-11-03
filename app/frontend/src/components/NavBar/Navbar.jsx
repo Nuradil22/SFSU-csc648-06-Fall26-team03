@@ -18,9 +18,15 @@ function Navbar({ darkMode, setDarkMode}){
         <nav className="navbar">
             <img src={darkMode ? darkLogo : logo} alt="CareerGPS logo" id="logo"/>
 
-            <NavLink to="/" end className={({isActive}) => isActive ? "nav-btn active" : "nav-btn"}>
-                Home
-            </NavLink>
+            {isLoggedIn ? (
+                <NavLink to="/account/dashboard" className={({isActive}) => isActive ? "nav-btn active" : "nav-btn"}>
+                    Dashboard
+                </NavLink>
+            ) : (
+                <NavLink to="/" end className={({isActive}) => isActive ? "nav-btn active" : "nav-btn"}>
+                    Home
+                </NavLink>
+            )}
 
             <NavLink to="/roadmap" className="nav-btn">
                 Career Roadmap

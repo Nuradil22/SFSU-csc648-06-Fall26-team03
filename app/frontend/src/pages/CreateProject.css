@@ -93,6 +93,119 @@
     background-color: #44a8d6;
 }
 
+/* 3D Model Upload */
+
+.project-model-editor {
+    margin-top: 32px;
+    padding: 24px;
+    border: 1px solid #dcdfe4;
+    border-radius: 12px;
+    background-color: #ffffff;
+    color: #222831;
+    width: 90%;
+}
+
+.project-model-editor h2 {
+    margin: 0 0 8px;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.model-instructions {
+    margin: 0 0 20px;
+    color: #667085;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.model-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 32px 20px;
+    border: 2px dashed #cdd2d9;
+    border-radius: 8px;
+    background-color: #f8f9fb;
+    text-align: center;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.model-dropzone p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.model-dropzone span {
+    color: #667085;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.model-upload-button,
+.model-dropzone button {
+    padding: 10px 16px;
+    border: 1px solid #263b59;
+    border-radius: 6px;
+    background-color: #263b59;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.model-upload-button:hover,
+.model-dropzone button:hover {
+    background-color: #344e73;
+}
+
+.model-remove-button {
+    border-color: #a33 !important;
+    background-color: #a33 !important;
+}
+
+.model-remove-button:hover {
+    background-color: #822 !important;
+}
+
+.app.dark .project-model-editor {
+    color: #44a8d6;
+    background-color: #363636;
+    border: 1px solid #44a8d6;
+    border-radius: 4px;
+    text-shadow: 0 0 10px black;
+}
+
+.app.dark .model-instructions {
+    color: #ccc;
+}
+
+.app.dark .model-dropzone {
+    background-color: #3C3C3C;
+    border-color: #44a8d6;
+}
+
+.app.dark .model-dropzone span {
+    color: #ccc;
+}
+
+.app.dark .model-upload-button,
+.app.dark .model-dropzone button {
+    background-color: #3092c0;
+    border-color: #3092c0;
+}
+
+.app.dark .model-upload-button:hover,
+.app.dark .model-dropzone button:hover {
+    background-color: #44a8d6;
+}
+
+@media (max-width: 600px) {
+    .project-model-editor {
+        padding: 16px;
+    }
+}
+
 @media (max-width: 600px) {
     .project-form-actions {
         justify-content: stretch;

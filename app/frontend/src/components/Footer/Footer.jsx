@@ -10,15 +10,20 @@ function Footer(){
                     Account Setup
                 </NavLink>
 
+                <NavLink to="/account/dashboard" end>
+                    Dashboard
+                </NavLink>
+
             </div>
-            <div className="footer-column">
-                <h1><span className="underline">Footer c2</span></h1>
-                <p>This footer will look better later</p>
-            </div>
+
             <div className="footer-column">
                 <h1><span className="underline">Resources</span></h1>
                 <NavLink to="/resources/certificates" end>
                     SFSU Certificate Programs
+                </NavLink>
+
+                <NavLink to="/" end>
+                    About Projectory
                 </NavLink>
             </div>
         </footer>
