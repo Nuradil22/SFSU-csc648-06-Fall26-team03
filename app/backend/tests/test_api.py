@@ -174,6 +174,27 @@ def test_sharing(client, auth):
 
 # --- R10–R14: AI career guidance ---------------------------------------------
 
+def test_visibility_discovery_and_owner_isolation(client, auth):
+    other = signup(client, email="visibility-other@sfsu.edu")
+    pid = client.post("/projects", headers=auth, json={"title": "Visibility scan"}).json()["id"]
+    assert client.post("/portfolio/me/share").status_code == 401
+    assert client.delete("/portfolio/me/share").status_code == 401
+    assert client.get("/projects").json() == []
+    client.post("/portfolio/me/share", headers=other)
+    assert client.get("/portfolio/me/share", headers=auth).json()["is_public"] is False
+    assert client.get("/projects").json() == []
+    share = client.post("/portfolio/me/share", headers=auth).json()
+    assert client.get("/portfolio/me/share", headers=auth).json()["is_public"] is True
+    assert [p["id"] for p in client.get("/projects").json()] == [pid]
+    client.delete("/portfolio/me/share", headers=other)
+    assert client.get("/portfolio/me/share", headers=auth).json()["is_public"] is True
+    assert client.delete("/portfolio/me/share", headers=auth).json()["is_public"] is False
+    assert client.get("/projects").json() == []
+    assert client.get(f"/public/portfolios/{share['share_token']}/projects/{pid}").status_code == 404
+    assert client.get(f"/projects/{pid}", headers=auth).status_code == 200
+    assert client.get(f"/projects/{pid}", headers=other).status_code == 404
+
+
 def test_guidance_mock(client, auth):
     assert client.post("/guidance", headers=auth).status_code == 400
     assert client.get("/guidance/latest", headers=auth).status_code == 404

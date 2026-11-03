@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import './portfolio.css';
 import Project from '../components/Projects/project';
-import { deleteProject, getCurrentUser, getMyProjects, getToken } from '../lib/api';
+import { deleteProject, getCurrentUser, getMyProjects, getToken, getPortfolioVisibility, setPortfolioVisibility } from '../lib/api';
 import { toProjectProps } from '../lib/projects';
 
 function Portfolio ({ darkMode }){
@@ -14,6 +14,27 @@ function Portfolio ({ darkMode }){
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(isLoggedIn);
     const [error, setError] = useState("");
+    const [visibility, setVisibility] = useState(null);
+    const [savingVisibility, setSavingVisibility] = useState(false);
+    const [visibilityError, setVisibilityError] = useState("");
+
+    async function loadVisibility() {
+        try {
+            setVisibility(await getPortfolioVisibility());
+            setVisibilityError("");
+        } catch (err) {
+            setVisibilityError(err.message);
+        }
+    }
+
+    useEffect(() => {
+        if (!isLoggedIn) return;
+        let cancelled = false;
+        getPortfolioVisibility()
+            .then((saved) => !cancelled && setVisibility(saved))
+            .catch((err) => !cancelled && setVisibilityError(err.message));
+        return () => { cancelled = true; };
+    }, [isLoggedIn]);
 
     useEffect(() => {
         if (!isLoggedIn) return;
@@ -35,14 +56,17 @@ function Portfolio ({ darkMode }){
 
     // placeholder:
     // Ali, please replace this with the backend update call when project visibility is supported.
-    function handleVisibilityToggle(projectId) {
-        setProjects((current) =>
-            current.map((project) =>
-                project.id === projectId
-                    ? { ...project, is_public: !project.is_public }
-                    : project
-            )
-        );
+    async function handleVisibilityToggle() {
+        if (!visibility || savingVisibility) return;
+        setSavingVisibility(true);
+        setVisibilityError("");
+        try {
+            setVisibility(await setPortfolioVisibility(!visibility.is_public));
+        } catch (err) {
+            setVisibilityError(`${err.message} Visibility was not confirmed; retry or reload to check.`);
+        } finally {
+            setSavingVisibility(false);
+        }
     }
 
     if (!isLoggedIn) {
@@ -69,6 +93,18 @@ function Portfolio ({ darkMode }){
 
             <div className="portfolio-body">
 
+                <section className="box" aria-label="Portfolio visibility">
+                    <h2>Portfolio visibility</h2>
+                    <p>Public portfolios and all their projects appear in Explore Projects. Private portfolios are hidden from public discovery.</p>
+                    <button type="button" className={`toggle ${visibility?.is_public ? "on" : ""}`}
+                        role="switch" aria-checked={Boolean(visibility?.is_public)}
+                        aria-label="Public portfolio" disabled={!visibility || savingVisibility}
+                        onClick={handleVisibilityToggle}>
+                        <span className="toggle-knob" />
+                    </button>
+                    <p role="status">{savingVisibility ? "Saving visibility..." : visibility ? `${visibility.is_public ? "Public" : "Private"} — ${visibilityError ? "last confirmed state" : "saved"}` : visibilityError ? "Visibility unavailable" : "Loading visibility..."}</p>
+                    {visibilityError && <p className="form-error" role="alert">{visibilityError} <button type="button" onClick={loadVisibility}>Reload visibility</button></p>}
+                </section>
                 {loading && <p>Loading your projects...</p>}
                 {error && <p className="form-error" role="alert">{error}</p>}
                 {!loading && !error && projects.length === 0 && <p>You haven't added any projects yet.</p>}
@@ -79,18 +115,7 @@ function Portfolio ({ darkMode }){
                     <Project key={project.id} {...toProjectProps(project)} darkMode={darkMode}>
                         <button className="portfolio-button" type="button" onClick={() => navigate(`/projects/${project.id}/edit`)}>Edit</button>
                         <button className="portfolio-button" type="button" onClick={() => handleDelete(project)}>Delete</button>
-                        <h3>Make Project Publicly Visible:</h3>
-                        <button type="button" className={`toggle ${project.is_public ? "on" : ""}`}
-                            onClick={() => handleVisibilityToggle(project.id)}
-                            role="switch" aria-checked={Boolean(project.is_public)}
-                            aria-label={`Make ${project.title} ${
-                                project.is_public ? "private" : "public"
-                            }`}
-
-                            title={project.is_public ? "Public" : "Private"}
-                        >
-                            <span className="toggle-knob" />
-                        </button>
+                        <p>Visibility follows your portfolio setting.</p>
                         
                     </Project>
                 ))}
