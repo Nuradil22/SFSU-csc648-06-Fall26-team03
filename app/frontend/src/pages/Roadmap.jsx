@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import './Roadmap.css';
 import quotes from '../data/inspoQuotes.js';
+import ChatWindow from '../components/Chat/ChatWindow';
 
 const quoteCnt = quotes.length;
 
@@ -30,13 +31,7 @@ function Roadmap({ darkMode }){
                         <h1>AI Career Guidance</h1>
                     </div>
                     
-                    <div className="chat-section">
-                        <p>something something in the month of May</p>
-                    </div>
-
-                    <div className="chat-input">
-                        <p>this is where the user types a message</p>
-                    </div>
+                    <ChatWindow />
 
                 </div>
 

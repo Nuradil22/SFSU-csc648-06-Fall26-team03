@@ -30,10 +30,18 @@ class Settings(BaseSettings):
 
     # AI career guidance (R10–R14). "mock" returns rule-based guidance with no
     # external calls, so the feature works in dev without an API key.
-    # "anthropic" calls Claude through the backend so the key never reaches the browser.
+    # "anthropic" and "openai" call the provider from the backend, so API keys
+    # stay server-side and never reach the browser.
     ai_provider: str = "mock"
+
+    # Anthropic configuration
     anthropic_api_key: str = ""
     ai_model: str = "claude-opus-5-5"
+
+    # OpenAI configuration
+    openai_api_key: str = ""
+    openai_model: str = "gpt-5-mini"
+
     ai_timeout_seconds: float = 120.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
