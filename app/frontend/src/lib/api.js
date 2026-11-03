@@ -97,6 +97,14 @@ export function enableSharing() {
     return request('/portfolio/me/share', { method: 'POST', auth: true });
 }
 
+export function getPortfolioVisibility() {
+    return request('/portfolio/me/share', { auth: true });
+}
+
+export function setPortfolioVisibility(isPublic) {
+    return request('/portfolio/me/share', { method: isPublic ? 'POST' : 'DELETE', auth: true });
+}
+
 export function getSharedPortfolio(shareToken) {
     return request(`/public/portfolios/${encodeURIComponent(shareToken)}`);
 }

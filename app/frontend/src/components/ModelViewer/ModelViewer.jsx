@@ -1,4 +1,5 @@
-import { Component, Suspense, useEffect } from "react";
+import { Component, Suspense, useEffect, useState } from "react";
+import { exportSceneSTL } from "../../lib/stl";
 import { Box3, Sphere } from "three";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
@@ -8,10 +9,15 @@ import "./ModelViewer.css";
 // Fraction of the viewer the model should fill on first load
 const FIT_FILL = 0.7;
 
-function Model({ url }) {
+function Model({ url, onLoaded }) {
     const { scene } = useGLTF(url);
     const get = useThree((state) => state.get);
     const size = useThree((state) => state.size);
+
+    useEffect(() => {
+        onLoaded(scene);
+        return () => onLoaded(null);
+    }, [scene, onLoaded]);
 
     useEffect(() => {
         const { camera, controls } = get();
@@ -71,16 +77,50 @@ class ModelErrorBoundary extends Component {
 }
 
 function ModelViewer({ modelUrl }) {
-    if (!modelUrl) return null;
+    return modelUrl ? <LoadedModelViewer key={modelUrl} modelUrl={modelUrl} /> : null;
+}
+
+function LoadedModelViewer({ modelUrl }) {
+    const [scene, setScene] = useState(null);
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState("");
+
+    async function downloadSTL() {
+        if (!scene || exporting) return;
+        setExporting(true);
+        setExportError("");
+        try {
+            await new Promise((resolve) => setTimeout(resolve, 30));
+            const data = exportSceneSTL(scene);
+            const url = URL.createObjectURL(new Blob([data], { type: 'model/stl' }));
+            const link = document.createElement('a');
+            const name = decodeURIComponent(new URL(modelUrl, window.location.href).pathname.split('/').pop());
+            link.href = url;
+            link.download = `${name.replace(/\.(glb|gltf)$/i, '') || 'scan'}.stl`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (err) {
+            setExportError(`Could not export STL: ${err.message}`);
+        } finally {
+            setExporting(false);
+        }
+    }
 
     return (
         <ModelErrorBoundary>
+            <button type="button" onClick={downloadSTL} disabled={!scene || exporting}>
+                {exporting ? 'Exporting STL...' : 'Export for CAD (STL)'}
+            </button>
+            <p>CAD-compatible triangle mesh, not a parametric CAD model. Scan meshes may need cleanup; verify scale and units before engineering use.</p>
+            {exportError && <p className="form-error" role="alert">{exportError}</p>}
             <div className="model-viewer">
                 <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
                     <ambientLight intensity={0.6} />
                     <directionalLight position={[4, 6, 4]} intensity={1.2} />
                     <Suspense fallback={null}>
-                        <Model url={modelUrl} />
+                        <Model url={modelUrl} onLoaded={setScene} />
                     </Suspense>
                     <OrbitControls enablePan={false} makeDefault />
                 </Canvas>
