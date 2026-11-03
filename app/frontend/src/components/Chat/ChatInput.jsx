@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+// Matches the backend ChatRequest limit (max_length=3000).
+const MAX_LENGTH = 3000;
+
 export default function ChatInput({ onSend, disabled }) {
     const [content, setContent] = useState("");
 
@@ -17,11 +20,13 @@ export default function ChatInput({ onSend, disabled }) {
             <textarea
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder="Ask about your career goals..."
+                placeholder="Ask about your career goals, or ask for a roadmap..."
                 aria-label="Message the career assistant"
+                maxLength={MAX_LENGTH}
                 rows={2}
                 disabled={disabled}
                 onKeyDown={(event) => {
+                    // Enter sends; Shift+Enter adds a new line.
                     if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();
                         event.currentTarget.form.requestSubmit();

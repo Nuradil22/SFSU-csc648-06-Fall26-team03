@@ -189,3 +189,34 @@ export function removeProjectModel(projectId) {
         auth: true,
     });
 }
+
+// --- Career chatbot (OpenAI via the authenticated FastAPI /career/* routes) ---
+
+// Returns {reply, provider, proposal_id, proposal}.
+export function sendCareerMessage(message) {
+    return request('/career/chat', { method: 'POST', body: { message }, auth: true });
+}
+
+// The student's approved roadmap ({id, title, goals}) or null.
+export function getCareerRoadmap() {
+    return request('/career/roadmap', { auth: true });
+}
+
+// Owner edits (e.g. ticking off milestones). Body is {title, goals}.
+export function updateCareerRoadmap(roadmap) {
+    return request('/career/roadmap', {
+        method: 'PUT',
+        body: { title: roadmap.title, goals: roadmap.goals },
+        auth: true,
+    });
+}
+
+// Pending AI-generated proposals, newest first: [{id, title, goals}].
+export function getRoadmapProposals() {
+    return request('/career/proposals', { auth: true });
+}
+
+// decision is 'approve' or 'reject'.
+export function decideRoadmapProposal(proposalId, decision) {
+    return request(`/career/proposals/${proposalId}/${decision}`, { method: 'POST', auth: true });
+}

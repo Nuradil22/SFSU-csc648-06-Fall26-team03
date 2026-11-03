@@ -1,22 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { sendCareerMessage } from "../lib/api";
 
-export async function sendMessage(message) {
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(`${API_URL}/chat`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ message }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-        throw new Error(data.detail || "Unable to send message.");
-    }
-
-    return data;
+// The career assistant is served by the authenticated FastAPI route
+// POST /career/chat (OpenAI-backed, personalized from the user's portfolio).
+// Resolves to {reply, provider, proposal_id, proposal}; rejected errors carry
+// .status (e.g. 401 when the user is not logged in).
+export function sendMessage(message) {
+    return sendCareerMessage(message);
 }

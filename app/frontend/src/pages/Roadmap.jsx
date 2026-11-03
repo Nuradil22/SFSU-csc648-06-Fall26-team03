@@ -1,108 +1,136 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import "./Roadmap.css";
 import quotes from "../data/inspoQuotes.js";
 import ChatWindow from "../components/Chat/ChatWindow.jsx";
+import { getCareerRoadmap, getToken, updateCareerRoadmap } from "../lib/api";
 
-// Placeholder until backend catches up, but figured it would look something like this
-
-const sampleMilestones = [
-    {
-        id: 1,
-        title: "Strengthen your programming foundation",
-        category: "Coursework",
-        description:
-            "Build a strong understanding of programming fundamentals, data structures, and algorithms.",
-        recommendations: [
-            "Review your university's data structures course options.",
-            "Practice programming problems regularly.",
-            "Review object-oriented programming concepts."
-        ],
-        source: "University course recommendation",
-        status: "Foundation"
-    },
-    {
-        id: 2,
-        title: "Build a full-stack application",
-        category: "Portfolio",
-        description:
-            "Create a project that demonstrates your ability to build and connect a frontend and backend.",
-        recommendations: [
-            "Build an application using React.",
-            "Connect it to a backend API.",
-            "Document the project and add it to your portfolio."
-        ],
-        source: "AI portfolio recommendation",
-        status: "Practical experience"
-    },
-    {
-        id: 3,
-        title: "Develop software testing skills",
-        category: "Technical skills",
-        description:
-            "Learn how to test applications and identify problems before they reach users.",
-        recommendations: [
-            "Learn unit testing fundamentals.",
-            "Explore testing tools for your preferred programming language.",
-            "Add tests to an existing portfolio project."
-        ],
-        source: "AI skill recommendation",
-        status: "Technical development"
-    },
-    {
-        id: 4,
-        title: "Explore industry certifications",
-        category: "Certification",
-        description:
-            "Research credentials that may complement your education and demonstrate relevant skills.",
-        recommendations: [
-            "Compare certification options related to software development.",
-            "Review official provider requirements and costs.",
-            "Decide whether a certification supports your career goals."
-        ],
-        source: "Certification research needed",
-        status: "Professional development"
-    },
-    {
-        id: 5,
-        title: "Prepare for internship applications",
-        category: "Career preparation",
-        description:
-            "Prepare your resume, portfolio, and interview skills for entry-level opportunities.",
-        recommendations: [
-            "Review your resume.",
-            "Make sure your portfolio projects are documented.",
-            "Practice technical and behavioral interview questions."
-        ],
-        source: "AI career recommendation",
-        status: "Career readiness"
-    }
-];
+// The milestones shown here are the user's approved AI roadmap
+// (GET /career/roadmap): {title, goals: [{id, title, milestones: [{id, title, completed}]}]}.
+// Each goal is shown as one milestone card; its milestones are the card's
+// recommended actions. AI-generated roadmaps only appear here after the user
+// approves them in the Career Assistant below.
 
 function getInspo() {
     return quotes[Math.floor(Math.random() * quotes.length)];
 }
 
+function goalProgress(goal) {
+    const steps = goal.milestones || [];
+    const done = steps.filter((step) => step.completed).length;
+    return { done, total: steps.length, complete: steps.length > 0 && done === steps.length };
+}
+
 function Roadmap() {
     const [quote] = useState(getInspo);
-    const [milestones, setMilestones] = useState(sampleMilestones);
+    const [roadmap, setRoadmap] = useState(null);
+    const [isLoadingRoadmap, setIsLoadingRoadmap] = useState(() => Boolean(getToken()));
+    const [isSaving, setIsSaving] = useState(false);
+    const [roadmapError, setRoadmapError] = useState(null);
 
-    const completedCount = milestones.filter(
-        (milestone) => milestone.completed
-    ).length;
+    const isLoggedIn = Boolean(getToken());
 
-    const progress = milestones.length
-        ? Math.round((completedCount / milestones.length) * 100)
+    // Reload after the user approves an AI proposal in the chat.
+    const loadRoadmap = useCallback(async () => {
+        try {
+            setRoadmap(await getCareerRoadmap());
+            setRoadmapError(null);
+        } catch (error) {
+            console.error("Roadmap load error:", error);
+            setRoadmapError(error.message);
+        }
+    }, []);
+
+    // Initial load of the user's approved roadmap.
+    useEffect(() => {
+        if (!getToken()) return;
+
+        getCareerRoadmap()
+            .then((data) => {
+                setRoadmap(data);
+                setRoadmapError(null);
+            })
+            .catch((error) => {
+                console.error("Roadmap load error:", error);
+                setRoadmapError(error.message);
+            })
+            .finally(() => setIsLoadingRoadmap(false));
+    }, []);
+
+    const goals = roadmap?.goals || [];
+    const allSteps = goals.flatMap((goal) => goal.milestones || []);
+    const completedCount = allSteps.filter((step) => step.completed).length;
+
+    const progress = allSteps.length
+        ? Math.round((completedCount / allSteps.length) * 100)
         : 0;
 
-    function toggleMilestone(id) {
-        setMilestones((current) =>
-            current.map((milestone) =>
-                milestone.id === id
-                    ? { ...milestone, completed: !milestone.completed }
-                    : milestone
+    const nextStep = allSteps.find((step) => !step.completed);
+
+    // Owner edits to the approved roadmap are saved with PUT /career/roadmap.
+    async function saveGoals(nextGoals) {
+        if (!roadmap || isSaving) return;
+
+        const previous = roadmap;
+        const next = { ...roadmap, goals: nextGoals };
+
+        setRoadmap(next);
+        setIsSaving(true);
+        setRoadmapError(null);
+
+        try {
+            setRoadmap(await updateCareerRoadmap(next));
+        } catch (error) {
+            console.error("Roadmap save error:", error);
+            setRoadmap(previous);
+            setRoadmapError(error.message);
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    // Card checkbox: marks every action in the goal complete (or not).
+    function toggleGoal(goalId) {
+        saveGoals(
+            goals.map((goal) => {
+                if (goal.id !== goalId) return goal;
+                const markDone = !goalProgress(goal).complete;
+                return {
+                    ...goal,
+                    milestones: (goal.milestones || []).map((step) => ({
+                        ...step,
+                        completed: markDone
+                    }))
+                };
+            })
+        );
+    }
+
+    function toggleStep(goalId, stepId) {
+        saveGoals(
+            goals.map((goal) =>
+                goal.id !== goalId
+                    ? goal
+                    : {
+                        ...goal,
+                        milestones: (goal.milestones || []).map((step) =>
+                            step.id === stepId
+                                ? { ...step, completed: !step.completed }
+                                : step
+                        )
+                    }
             )
         );
+    }
+
+    let emptyMessage = null;
+    if (!isLoggedIn) {
+        emptyMessage = "Log in to see your personalized career roadmap.";
+    } else if (isLoadingRoadmap) {
+        emptyMessage = "Loading your roadmap...";
+    } else if (!goals.length) {
+        emptyMessage =
+            "You don't have an approved roadmap yet. Ask the Career Assistant below to create one, then approve it to see it here.";
     }
 
     return (
@@ -123,10 +151,11 @@ function Roadmap() {
                 <section className="roadmap-overview box">
                     <div>
                         <p className="roadmap-eyebrow">YOUR CURRENT CAREER GOAL</p>
-                        <h2>Software Engineer</h2>
+                        <h2>{roadmap?.title || "No roadmap yet"}</h2>
                         <p className="roadmap-muted">
-                            A sample personalized roadmap based on your education,
-                            career interests, and portfolio.
+                            {roadmap
+                                ? "Your personalized roadmap, generated by AI from your education, career interests, and portfolio, and approved by you."
+                                : "Your personalized roadmap will be based on your education, career interests, and portfolio."}
                         </p>
                     </div>
 
@@ -150,7 +179,7 @@ function Roadmap() {
                         </div>
 
                         <p className="roadmap-muted">
-                            {completedCount} of {milestones.length} milestones completed
+                            {completedCount} of {allSteps.length} milestones completed
                         </p>
                     </div>
                 </section>
@@ -165,68 +194,92 @@ function Roadmap() {
                                 <h2>Roadmap Milestones</h2>
                             </div>
                             <span className="roadmap-count">
-                                {milestones.length} steps
+                                {goals.length} steps
                             </span>
                         </div>
 
-                        <div className="milestone-list">
-                            {milestones.map((milestone, index) => (
-                                <article
-                                    className={`milestone-card ${
-                                        milestone.completed ? "completed" : ""
-                                    }`}
-                                    key={milestone.id}
-                                >
-                                    <div className="milestone-number">
-                                        {milestone.completed ? "✓" : index + 1}
-                                    </div>
+                        {roadmapError && (
+                            <p className="chat-proposal-error" role="alert">
+                                {roadmapError}
+                            </p>
+                        )}
 
-                                    <div className="milestone-content">
-                                        <div className="milestone-title-row">
-                                            <div>
-                                                <span className="milestone-category">
-                                                    {milestone.category}
-                                                </span>
-                                                <h3>{milestone.title}</h3>
+                        {emptyMessage ? (
+                            <p className="roadmap-muted">{emptyMessage}</p>
+                        ) : (
+                            <div className="milestone-list">
+                                {goals.map((goal, index) => {
+                                    const { done, total, complete } = goalProgress(goal);
+                                    const steps = goal.milestones || [];
+
+                                    return (
+                                        <article
+                                            className={`milestone-card ${
+                                                complete ? "completed" : ""
+                                            }`}
+                                            key={goal.id}
+                                        >
+                                            <div className="milestone-number">
+                                                {complete ? "✓" : index + 1}
                                             </div>
 
-                                            <label className="milestone-complete">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={Boolean(milestone.completed)}
-                                                    onChange={() =>
-                                                        toggleMilestone(milestone.id)
-                                                    }
-                                                />
-                                                <span>
-                                                    {milestone.completed
-                                                        ? "Completed"
-                                                        : "Mark complete"}
-                                                </span>
-                                            </label>
-                                        </div>
+                                            <div className="milestone-content">
+                                                <div className="milestone-title-row">
+                                                    <div>
+                                                        <span className="milestone-category">
+                                                            {done} of {total} actions done
+                                                        </span>
+                                                        <h3>{goal.title}</h3>
+                                                    </div>
 
-                                        <p>{milestone.description}</p>
+                                                    <label className="milestone-complete">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={complete}
+                                                            disabled={isSaving || !total}
+                                                            onChange={() => toggleGoal(goal.id)}
+                                                        />
+                                                        <span>
+                                                            {complete
+                                                                ? "Completed"
+                                                                : "Mark complete"}
+                                                        </span>
+                                                    </label>
+                                                </div>
 
-                                        <details className="milestone-details">
-                                            <summary>View recommended actions</summary>
+                                                {steps.length > 0 && (
+                                                    <details className="milestone-details">
+                                                        <summary>View recommended actions</summary>
 
-                                            <ul>
-                                                {milestone.recommendations.map(
-                                                    (recommendation, i) => (
-                                                        <li key={i}>{recommendation}</li>
-                                                    )
+                                                        <ul>
+                                                            {steps.map((step) => (
+                                                                <li key={step.id}>
+                                                                    <label>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={Boolean(step.completed)}
+                                                                            disabled={isSaving}
+                                                                            onChange={() =>
+                                                                                toggleStep(goal.id, step.id)
+                                                                            }
+                                                                        />{" "}
+                                                                        {step.title}
+                                                                    </label>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </details>
                                                 )}
-                                            </ul>
-                                        </details>
 
-                                        <span className="milestone-source">
-                                            <span>Source:</span> {milestone.source}
-                                        </span>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                                                <span className="milestone-source">
+                                                    <span>Source:</span> AI career recommendation (approved by you)
+                                                </span>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </section>
 
                     {/* Sidebar */}
@@ -236,8 +289,9 @@ function Roadmap() {
                             <p className="roadmap-eyebrow">UP NEXT</p>
                             <h2>Your next step</h2>
                             <p>
-                                {milestones.find((milestone) => !milestone.completed)
-                                    ?.title || "You've completed every milestone!"}
+                                {!allSteps.length
+                                    ? "Approve an AI roadmap to get your next step."
+                                    : nextStep?.title || "You've completed every milestone!"}
                             </p>
                             <p className="roadmap-muted">
                                 Work through your milestones at your own pace.
@@ -301,7 +355,7 @@ function Roadmap() {
                         </div>
                     </div>
 
-                    <ChatWindow />
+                    <ChatWindow onRoadmapApproved={loadRoadmap} />
                 </section>
             </div>
         </main>

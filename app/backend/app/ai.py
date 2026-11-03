@@ -8,6 +8,7 @@ Providers (AI_PROVIDER):
 - "mock": rule-based guidance built from the portfolio itself. No network calls and
   no API key, so frontend work and tests don't depend on an external service.
 - "anthropic": Claude via the official SDK, constrained to the GuidanceContent schema.
+- "openai": OpenAI via the official SDK, constrained to the GuidanceContent schema.
 
 To add another provider, write a function with the same signature as
 `_anthropic_guidance` and register it in PROVIDERS.
@@ -111,7 +112,7 @@ def has_enough_data(payload: dict) -> bool:
 # Claude provider
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are a career advisor for college students using CareerGPS, a portfolio platform.
+SYSTEM_PROMPT = """You are a career advisor for college students using Projectory, a portfolio platform.
 You will receive one student's portfolio as JSON: education, skills, experience, certificates, projects, career interests, and the kinds of jobs they want.
 
 Produce personalized career guidance:
@@ -244,10 +245,70 @@ def _mock_guidance(payload: dict) -> tuple[GuidanceContent, str]:
         improvements=improvements, next_steps=next_steps,
     ), "mock"
 
+def _openai_guidance(payload: dict) -> tuple[GuidanceContent, str]:
+    import openai
+
+    if not settings.openai_api_key:
+        raise AIServiceError("AI career guidance is not configured on the server.", unavailable=True)
+
+    client = openai.OpenAI(
+        api_key=settings.openai_api_key,
+        timeout=settings.ai_timeout_seconds,
+        max_retries=2,
+    )
+
+    try:
+        response = client.responses.parse(
+            model=settings.openai_model,
+            instructions=SYSTEM_PROMPT,
+            input=[
+                {
+                    "role": "user",
+                    "content": json.dumps(payload, ensure_ascii=False),
+                }
+            ],
+            text_format=GuidanceContent,
+        )
+
+    except openai.RateLimitError as exc:
+        logger.warning("OpenAI rate limit: %s", exc)
+        raise AIServiceError(
+            "The AI service is busy. Please try again later.",
+            unavailable=True,
+        ) from exc
+
+    except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
+        logger.error("OpenAI authentication error: %s", exc)
+        raise AIServiceError(
+            "OpenAI is not configured correctly on the server.",
+            unavailable=True,
+        ) from exc
+
+    except openai.APIConnectionError as exc:
+        logger.error("OpenAI connection error: %s", exc)
+        raise AIServiceError(
+            "Could not connect to the AI service.",
+            unavailable=True,
+        ) from exc
+
+    except openai.APIStatusError as exc:
+        logger.error("OpenAI API error: %s", exc)
+        raise AIServiceError(
+            "The AI service returned an error. Please try again.",
+            unavailable=exc.status_code >= 500,
+        ) from exc
+
+    if response.output_parsed is None:
+        raise AIServiceError(
+            "The AI service could not generate complete career guidance."
+        )
+
+    return response.output_parsed, response.model
 
 PROVIDERS: dict[str, Callable[[dict], tuple[GuidanceContent, str]]] = {
     "mock": _mock_guidance,
     "anthropic": _anthropic_guidance,
+    "openai": _openai_guidance,
 }
 
 

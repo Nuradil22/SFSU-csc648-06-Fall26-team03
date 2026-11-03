@@ -1,0 +1,110 @@
+/* Career chat extras. The base chat layout (.chat-window, .message-list,
+   .message-row, .message-bubble, .chat-input-form) is styled in
+   pages/Roadmap.css; this file only adds error bubbles and AI roadmap
+   proposal cards. */
+
+.error-message .message-bubble {
+    background: #fdecec;
+    color: #9b1c1c;
+}
+
+.error-message .message-avatar {
+    background: #c0392b;
+}
+
+.app.dark .error-message .message-bubble {
+    background: #4a1f1f;
+    color: #ffd6d6;
+}
+
+/* --- AI roadmap proposals --- */
+
+.chat-proposal {
+    align-self: stretch;
+    padding: 12px;
+    border: 1px solid #c9dfea;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1d1d1f;
+}
+
+.chat-proposal-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+}
+
+.chat-proposal-status {
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.chat-proposal-status.is-approved {
+    background: #dff3e6;
+    color: #1e6b3d;
+}
+
+.chat-proposal-status.is-rejected {
+    background: #eceff1;
+    color: #555;
+}
+
+.chat-proposal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.chat-proposal-actions button {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+.chat-proposal-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-approve {
+    background: #2e9e5b;
+    color: white;
+}
+
+.chat-reject {
+    background: #eceff1;
+    color: #333;
+}
+
+.chat-proposal-note {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    color: #1e6b3d;
+}
+
+.chat-proposal-error {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    color: #9b1c1c;
+}
+
+.app.dark .chat-proposal {
+    background: #1e1f22;
+    color: whitesmoke;
+    border-color: #3a4a55;
+}
+
+.app.dark .chat-reject {
+    background: #3a3d41;
+    color: whitesmoke;
+}

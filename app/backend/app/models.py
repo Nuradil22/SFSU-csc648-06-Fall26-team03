@@ -294,3 +294,70 @@ class CareerGuidance(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     portfolio: Mapped[Portfolio] = relationship(back_populates="guidance")
+
+
+class CareerChatMessage(Base):
+    __tablename__ = "career_chat_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+
+class CareerRoadmap(Base):
+    __tablename__ = "career_roadmaps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+        nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    goals: Mapped[list[dict]] = mapped_column(
+        JSONType,
+        default=list,
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )
+
+
+class RoadmapProposal(Base):
+    __tablename__ = "roadmap_proposals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    goals: Mapped[list[dict]] = mapped_column(
+        JSONType,
+        default=list,
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="pending",
+        nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
