@@ -4,38 +4,44 @@ import { useState } from "react";
 const MAX_LENGTH = 3000;
 
 export default function ChatInput({ onSend, disabled }) {
-  const [text, setText] = useState("");
+    const [content, setContent] = useState("");
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (!text.trim() || disabled) return;
+    function handleSubmit(event) {
+        event.preventDefault();
 
-    onSend(text.trim());
-    setText("");
-  }
+        if (!content.trim() || disabled) return;
 
-  function handleKeyDown(event) {
-    // Enter sends; Shift+Enter adds a new line.
-    if (event.key === "Enter" && !event.shiftKey) {
-      handleSubmit(event);
+        onSend(content.trim());
+        setContent("");
     }
-  }
 
-  return (
-    <form className="chat-composer" onSubmit={handleSubmit}>
-      <textarea
-        value={text}
-        onChange={event => setText(event.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask about career paths, skills, or a roadmap…"
-        aria-label="Message your career guide"
-        maxLength={MAX_LENGTH}
-        rows={2}
-        disabled={disabled}
-      />
-      <button type="submit" disabled={disabled || !text.trim()}>
-        Send
-      </button>
-    </form>
-  );
+    return (
+        <form className="chat-input-form" onSubmit={handleSubmit}>
+            <textarea
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                placeholder="Ask about your career goals, or ask for a roadmap..."
+                aria-label="Message the career assistant"
+                maxLength={MAX_LENGTH}
+                rows={2}
+                disabled={disabled}
+                onKeyDown={(event) => {
+                    // Enter sends; Shift+Enter adds a new line.
+                    if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        event.currentTarget.form.requestSubmit();
+                    }
+                }}
+            />
+
+            <button
+                type="submit"
+                disabled={disabled || !content.trim()}
+                aria-label="Send message"
+            >
+                <span>Send</span>
+                <span aria-hidden="true">➤</span>
+            </button>
+        </form>
+    );
 }

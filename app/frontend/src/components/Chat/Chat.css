@@ -1,103 +1,23 @@
-/* Styles for the career chat window. Class names are prefixed with
-   "chat-" but avoid .chat-section/.chat-input used by Roadmap.css. */
+/* Career chat extras. The base chat layout (.chat-window, .message-list,
+   .message-row, .message-bubble, .chat-input-form) is styled in
+   pages/Roadmap.css; this file only adds error bubbles and AI roadmap
+   proposal cards. */
 
-.chat-window {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    flex: 1;
-    min-height: 360px;
-}
-
-.chat-messages {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-    max-height: 480px;
-    overflow-y: auto;
-    padding: 12px;
-}
-
-.chat-bubble {
-    max-width: 80%;
-    padding: 8px 12px;
-    border-radius: 12px;
-    line-height: 1.4;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-}
-
-.chat-bubble-user {
-    align-self: flex-end;
-    background: #44a8d6;
-    color: white;
-}
-
-.chat-bubble-assistant {
-    align-self: flex-start;
-    background: #eef1f4;
-    color: #1d1d1f;
-}
-
-.chat-bubble-error {
-    align-self: flex-start;
+.error-message .message-bubble {
     background: #fdecec;
     color: #9b1c1c;
 }
 
-.chat-thinking {
-    font-style: italic;
-    opacity: 0.7;
+.error-message .message-avatar {
+    background: #c0392b;
 }
 
-.chat-composer {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    border-top: 1px solid #ccc;
-}
-
-.chat-composer textarea {
-    flex: 1;
-    resize: none;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font: inherit;
-}
-
-.chat-composer button {
-    padding: 0 16px;
-    border-radius: 8px;
-    border: none;
-    background: #44a8d6;
-    color: white;
-    cursor: pointer;
-}
-
-.chat-composer button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.app.dark .chat-bubble-assistant {
-    background: #2c2f33;
-    color: whitesmoke;
-}
-
-.app.dark .chat-bubble-error {
+.app.dark .error-message .message-bubble {
     background: #4a1f1f;
     color: #ffd6d6;
 }
 
-.app.dark .chat-composer textarea {
-    background: #1e1f22;
-    color: whitesmoke;
-    border-color: #555;
-}
-
-/* --- AI roadmap proposals and the approved roadmap --- */
+/* --- AI roadmap proposals --- */
 
 .chat-proposal {
     align-self: stretch;
@@ -178,30 +98,9 @@
     color: #9b1c1c;
 }
 
-.chat-official-roadmap {
-    margin: 12px 12px 0;
-    padding: 8px 12px;
-    border: 1px solid #c9dfea;
-    border-radius: 12px;
-}
-
-.chat-official-roadmap summary {
-    cursor: pointer;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.chat-official-roadmap[open] summary {
-    margin-bottom: 12px;
-}
-
 .app.dark .chat-proposal {
     background: #1e1f22;
     color: whitesmoke;
-    border-color: #3a4a55;
-}
-
-.app.dark .chat-official-roadmap {
     border-color: #3a4a55;
 }
 

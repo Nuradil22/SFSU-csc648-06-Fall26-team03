@@ -164,7 +164,25 @@ export function removeProjectMedia(projectId, mediaId) {
     return request(`/projects/${projectId}/media/${mediaId}`, { method: 'DELETE', auth: true });
 }
 
-// --- Career chatbot ---
+export function uploadProjectModel(projectId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return request(`/projects/${projectId}/model`, {
+        method: 'PUT',
+        formData,
+        auth: true,
+    });
+}
+
+export function removeProjectModel(projectId) {
+    return request(`/projects/${projectId}/model`, {
+        method: 'DELETE',
+        auth: true,
+    });
+}
+
+// --- Career chatbot (OpenAI via the authenticated FastAPI /career/* routes) ---
 
 // Returns {reply, provider, proposal_id, proposal}.
 export function sendCareerMessage(message) {
