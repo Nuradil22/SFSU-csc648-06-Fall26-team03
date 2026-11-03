@@ -5,14 +5,17 @@ import "./CreateProject.css";
 import ProjectGallery from "../components/Projects/ProjectGallery";
 import DescriptionEditor from "../components/Projects/DescriptionEditor";
 import ProjectLinks from "../components/Projects/ProjectLinks";
+
 import {
     addProjectLink,
     createProject,
     getProject,
     getToken,
     removeProjectMedia,
+    removeProjectModel,
     updateProject,
     uploadProjectImage,
+    uploadProjectModel,
 } from "../lib/api";
 
 // Plain-text version of the editor blocks, saved as the project's `description`
@@ -44,6 +47,11 @@ function CreateProject({ darkMode }) {
     // What's already saved on the server, to work out what changed on save.
     const [saved, setSaved] = useState({ images: [], links: [] });
 
+    // 3D model state
+    const [modelFile, setModelFile] = useState(null);
+    const [savedModel, setSavedModel] = useState(null);
+    const [removeModel, setRemoveModel] = useState(false);
+
     const [loading, setLoading] = useState(isEditing);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -67,6 +75,8 @@ function CreateProject({ darkMode }) {
                 setImages(savedImages);
                 setLinks(savedLinks);
                 setSaved({ images: savedImages, links: savedLinks });
+
+                setSavedModel(project.model_3d || null);
             })
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
@@ -88,6 +98,13 @@ function CreateProject({ darkMode }) {
         let project = null;
         try {
             project = isEditing ? await updateProject(id, fields) : await createProject(fields);
+
+            // Upload or remove the project's 3D model.
+            if (modelFile) {
+                await uploadProjectModel(project.id, modelFile);
+            } else if (removeModel && savedModel) {
+                await removeProjectModel(project.id);
+            }
 
             // Images: delete removed ones, upload new ones.
             const keptImageIds = new Set(images.filter((image) => image.saved).map((image) => image.id));
@@ -180,6 +197,84 @@ function CreateProject({ darkMode }) {
                 <DescriptionEditor blocks={blocks} setBlocks={setBlocks} />
 
                 <ProjectGallery images={images} setImages={setImages} />
+
+                <div className="project-model-editor">
+                    <h2>3D Project Model</h2>
+                    <p className="model-instructions">
+                        Upload a 3D model of your project. GLB files exported from Scaniverse are supported.
+                    </p>
+
+                    <div className="model-dropzone">
+                        <p>
+                            {modelFile
+                                ? "New model selected"
+                                : savedModel && !removeModel
+                                    ? "A 3D model is attached to this project"
+                                    : "Add a 3D model to your project"}
+                        </p>
+
+                        <span>
+                            {modelFile
+                                ? modelFile.name
+                                : savedModel && !removeModel
+                                    ? savedModel.original_filename || "Existing 3D model"
+                                    : "GLB files only"}
+                        </span>
+
+                        <label htmlFor="project-model" className="model-upload-button">
+                            {modelFile || (savedModel && !removeModel) ? "Choose Another Model" : "Choose GLB File"}
+                        </label>
+
+                        <input
+                            id="project-model"
+                            type="file"
+                            accept=".glb,model/gltf-binary"
+                            hidden
+                            onChange={(event) => {
+                                const file = event.target.files?.[0];
+
+                                if (!file) {
+                                    setModelFile(null);
+                                    return;
+                                }
+
+                                if (!file.name.toLowerCase().endsWith(".glb")) {
+                                    setError("Please select a .glb file.");
+                                    event.target.value = "";
+                                    setModelFile(null);
+                                    return;
+                                }
+
+                                setError("");
+                                setModelFile(file);
+                                setRemoveModel(false);
+                            }}
+                        />
+
+                        {savedModel && !removeModel && (
+                            <button
+                                type="button"
+                                className="model-remove-button"
+                                onClick={() => {
+                                    setRemoveModel(true);
+                                    setModelFile(null);
+                                }}
+                            >
+                                Remove Model
+                            </button>
+                        )}
+
+                        {removeModel && (
+                            <button
+                                type="button"
+                                className="model-undo-button"
+                                onClick={() => setRemoveModel(false)}
+                            >
+                                Undo Remove
+                            </button>
+                        )}
+                    </div>
+                </div>
 
                 <ProjectLinks links={links} setLinks={setLinks} />
 
