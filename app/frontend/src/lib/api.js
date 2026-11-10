@@ -197,6 +197,17 @@ export function sendCareerMessage(message) {
     return request('/career/chat', { method: 'POST', body: { message }, auth: true });
 }
 
+// Whether the saved portfolio is complete enough for the assistant:
+// {ready, missing: [{key, label}], optional_missing: [{key, label}]}.
+export function getCareerReadiness() {
+    return request('/career/readiness', { auth: true });
+}
+
+// Saved conversation, oldest first: [{id, role, content}].
+export function getCareerChatHistory() {
+    return request('/career/chat/history', { auth: true });
+}
+
 // The student's approved roadmap ({id, title, goals}) or null.
 export function getCareerRoadmap() {
     return request('/career/roadmap', { auth: true });
