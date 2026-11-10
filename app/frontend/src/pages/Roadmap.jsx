@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import "./Roadmap.css";
 import quotes from "../data/inspoQuotes.js";
 import ChatWindow from "../components/Chat/ChatWindow.jsx";
+import ResourceList from "../components/Roadmap/ResourceList.jsx";
 import { getCareerRoadmap, getToken, updateCareerRoadmap } from "../lib/api";
 
 // The milestones shown here are the user's approved AI roadmap
@@ -130,7 +131,7 @@ function Roadmap() {
         emptyMessage = "Loading your roadmap...";
     } else if (!goals.length) {
         emptyMessage =
-            "You don't have an approved roadmap yet. Ask the Career Assistant below to create one, then approve it to see it here.";
+            "You don't have an approved roadmap yet. The Career Assistant below drafts one from your portfolio (or ask it for one); approve it to see it here.";
     }
 
     return (
@@ -265,6 +266,10 @@ function Roadmap() {
                                                                         />{" "}
                                                                         {step.title}
                                                                     </label>
+                                                                    <ResourceList
+                                                                        resources={step.resources}
+                                                                        compact
+                                                                    />
                                                                 </li>
                                                             ))}
                                                         </ul>
@@ -301,9 +306,9 @@ function Roadmap() {
                         <section className="box roadmap-resources">
                             <h2>Roadmap Resources</h2>
                             <p>
-                                Recommendations will eventually include links to
-                                official university catalogs, certification providers,
-                                and other trusted resources.
+                                Recommended actions can include courses, programs,
+                                and certificates found by live research. Only links
+                                returned by that research are shown.
                             </p>
 
                             <div className="source-legend">

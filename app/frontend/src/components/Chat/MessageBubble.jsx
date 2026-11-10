@@ -1,4 +1,5 @@
 import RoadmapProposalCard from "./RoadmapProposalCard";
+import ResourceList from "../Roadmap/ResourceList";
 
 // role is "user", "assistant", "error", or "proposal".
 export default function MessageBubble({ message, onDecide }) {
@@ -21,6 +22,8 @@ export default function MessageBubble({ message, onDecide }) {
 
             <div className="message-bubble">
                 {message.content}
+                {/* Verified links found by live research for this reply. */}
+                <ResourceList resources={message.resources} />
             </div>
         </div>
     );

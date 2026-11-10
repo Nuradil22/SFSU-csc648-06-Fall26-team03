@@ -41,6 +41,37 @@ class Settings(BaseSettings):
     # OpenAI configuration
     openai_api_key: str = ""
     openai_model: str = "gpt-5-mini"
+    # Live web research for roadmaps and the career chatbot (OpenAI web_search
+    # tool). Used for roadmap generation and for messages about courses,
+    # programs, certificates, or learning resources. Each search is billed by
+    # OpenAI, so it is off unless enabled.
+    openai_web_search: bool = False
+    # Optional comma-separated allowlist (subdomains included). Empty means the
+    # open web, with official SFSU and other reputable providers preferred.
+    openai_web_search_domains: str = ""
+    # Sites never accepted as resource sources (subdomains included): forums,
+    # video and Q&A sites, and unofficial catalog mirrors. Comma-separated.
+    openai_web_search_blocked_domains: str = "courseleaf.com,reddit.com,youtube.com,quora.com"
+    # Before a researched link is shown, the server checks that it opens over
+    # valid HTTPS (no page content is kept). Missing pages, TLS/connection
+    # errors, timeouts, and broken redirects are dropped.
+    resource_link_check: bool = True
+    resource_link_check_timeout: float = 5.0
+    # Upper bound on searches in one request (OpenAI max_tool_calls).
+    openai_max_web_searches: int = 3
+    # "low" | "medium" | "high": how much page text each search adds (cost).
+    openai_web_search_context: str = "low"
+    # Reasoning effort for the career assistant ("minimal" | "low" | "medium" |
+    # "high"). Reasoning tokens count toward the output limits below.
+    openai_reasoning_effort: str = "low"
+    # Output-token caps (reasoning included); longer answers are cut off by
+    # OpenAI and rejected with a clear error.
+    openai_max_output_tokens_chat: int = 3000
+    openai_max_output_tokens_roadmap: int = 10000
+
+    # Per-student limits on billed AI calls (checked before calling the provider).
+    ai_roadmap_generations_per_day: int = 5
+    ai_chat_messages_per_hour: int = 30
 
     ai_timeout_seconds: float = 120.0
 

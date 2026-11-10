@@ -6,6 +6,7 @@ import pytest
 
 from app.config import settings
 
+from . import openai_fakes
 from .conftest import signup
 
 
@@ -169,25 +170,13 @@ def test_education_needs_a_degree_and_experience_counts_as_project_evidence(clie
 
 # --- OpenAI path: the prompt is built from the caller's own saved data --------
 
-class _FakeOpenAI:
-    calls = []
-
-    def __init__(self, **kwargs):
-        self.responses = self
-
-    def parse(self, **kwargs):
-        _FakeOpenAI.calls.append(kwargs)
-        parsed = kwargs["text_format"](reply="ok", proposal=None)
-        return type("Response", (), {"output_parsed": parsed})()
-
-
 @pytest.fixture
 def fake_openai(monkeypatch):
-    _FakeOpenAI.calls = []
+    openai_fakes.reset()
     monkeypatch.setattr(settings, "ai_provider", "openai")
     monkeypatch.setattr(settings, "openai_api_key", "test-key")
-    monkeypatch.setattr(openai, "OpenAI", _FakeOpenAI)
-    return _FakeOpenAI.calls
+    monkeypatch.setattr(openai, "OpenAI", openai_fakes.FakeOpenAI)
+    return openai_fakes.FakeOpenAI.calls
 
 
 def test_openai_prompt_uses_only_the_callers_portfolio(client, auth, fake_openai):
@@ -218,7 +207,10 @@ def test_openai_prompt_includes_pending_draft_for_follow_ups(client, auth, fake_
     proposal = _roadmap_proposal(client, auth)["proposal"]
 
     monkeypatch.setattr(settings, "ai_provider", "openai")
-    client.post("/career/chat", headers=auth, json={"message": "Make that roadmap shorter"})
+    openai_fakes.FakeOpenAI.script = [{"parsed": {"proposal": openai_fakes.plan(title="Shorter")}}]
+    r = client.post("/career/chat", headers=auth, json={"message": "Make that roadmap shorter"})
+    assert r.status_code == 200, r.text
+    assert r.json()["proposal"]["title"] == "Shorter"
     prompt = fake_openai[-1]["instructions"]
     assert proposal["title"] in prompt
     assert prompt.split("DRAFT AWAITING APPROVAL")[1].strip() != "none"

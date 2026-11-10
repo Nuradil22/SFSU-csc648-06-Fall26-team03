@@ -154,8 +154,11 @@ interests, coursework, technologies, AI results) are JSON (JSONB on Postgres).
 
 Tables are created automatically on startup with `Base.metadata.create_all()`.
 That creates **missing tables only** and never changes existing ones. Adding a
-new table is fine; changing columns on an existing table needs a migration
-(introduce Alembic when that first happens).
+new table is fine. New **nullable** columns on existing tables are added at
+startup by `app/migrations.py` (`ALTER TABLE ... ADD COLUMN` only, skipped when
+already present, never drops or rewrites data); list them in
+`ADDITIVE_COLUMNS`. Anything else (renames, type changes, NOT NULL columns)
+needs a real migration tool such as Alembic.
 
 ## Configuration
 
@@ -167,6 +170,35 @@ See `.env.example` for every setting. For deployment (Render):
 - `AI_PROVIDER=anthropic` plus `ANTHROPIC_API_KEY` to use Claude. Leave it as
   `mock` to keep guidance working without a key.
 - `FRONTEND_URL` for share links.
+
+### Career assistant: automatic roadmaps and live research
+
+- The Roadmap page calls `POST /career/roadmap/auto` once the portfolio is
+  ready. It generates a first draft only when the student has no pending
+  draft, no approved roadmap, and no automatic draft from the same portfolio
+  data (a SHA-256 fingerprint of the AI payload), so refreshing never
+  regenerates. Approved roadmaps are never replaced automatically.
+- Chat messages asking to make/update/regenerate a roadmap always produce a
+  fresh draft from the latest saved portfolio; older pending drafts become
+  `superseded`.
+- `OPENAI_WEB_SEARCH=true` (with `AI_PROVIDER=openai`) enables OpenAI's
+  `web_search` tool for roadmap generation and for questions about courses,
+  programs, certificates, or resources. `OPENAI_WEB_SEARCH_DOMAINS` optionally
+  restricts it to a domain allowlist (empty = open web, SFSU preferred).
+  Only links returned by that request's search (or already on the student's
+  roadmap) are kept; everything else is dropped server-side.
+- Cost controls: `OPENAI_MAX_WEB_SEARCHES` (per request),
+  `OPENAI_WEB_SEARCH_CONTEXT`, `AI_ROADMAP_GENERATIONS_PER_DAY`, and
+  `AI_CHAT_MESSAGES_PER_HOUR` (per student, 429 before any AI call). Each AI
+  call is logged in `ai_usage_events` (counts, tokens, and status only, no
+  content), including failed and cut-off calls.
+- Answers use `responses.create` with a strict JSON schema, low reasoning
+  effort (`OPENAI_REASONING_EFFORT`), and output caps
+  (`OPENAI_MAX_OUTPUT_TOKENS_CHAT` / `OPENAI_MAX_OUTPUT_TOKENS_ROADMAP`,
+  reasoning tokens included). A response cut off at the cap (`incomplete`) is
+  rejected with a clear 502 and nothing is saved.
+- The duplicate-generation lock is per server process; with several workers
+  two near-simultaneous page loads could each create a draft.
 
 ### Swapping the AI provider
 

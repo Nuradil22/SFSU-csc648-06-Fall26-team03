@@ -156,3 +156,62 @@
 .app.dark .chat-readiness a {
     color: #8cc8ff;
 }
+
+/* --- P1: replaced drafts, automatic generation, portfolio changes --- */
+
+.chat-proposal-status.is-superseded {
+    background: #eceff1;
+    color: #4a5560;
+}
+
+.chat-auto-status,
+.chat-portfolio-changed {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 1px solid #c9dfea;
+    border-radius: 10px;
+    background: #f3f9fc;
+    color: #1d1d1f;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.chat-portfolio-changed {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-portfolio-changed p {
+    margin: 0;
+    flex: 1 1 220px;
+}
+
+.chat-portfolio-changed button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #2b7fab;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-portfolio-changed button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.app.dark .chat-auto-status,
+.app.dark .chat-portfolio-changed {
+    background: #1e1f22;
+    color: whitesmoke;
+    border-color: #3a4a55;
+}
+
+.app.dark .chat-proposal-status.is-superseded {
+    background: #2c3236;
+    color: #c5ccd2;
+}

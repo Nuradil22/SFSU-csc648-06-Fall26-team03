@@ -307,6 +307,8 @@ class CareerChatMessage(Base):
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    # Verified learning resources shown with an assistant reply (P1).
+    resources: Mapped[list[dict] | None] = mapped_column(JSONType, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
@@ -334,6 +336,9 @@ class CareerRoadmap(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+    # Fingerprint of the portfolio the approved proposal was generated from;
+    # NULL for roadmaps approved before P1 or written by the owner (unknown).
+    portfolio_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class RoadmapProposal(Base):
@@ -351,13 +356,46 @@ class RoadmapProposal(Base):
         default=list,
         nullable=False
     )
+    # pending | approved | rejected | superseded (a newer draft replaced it)
     status: Mapped[str] = mapped_column(
         String(20),
         default="pending",
         nullable=False
     )
+    # "auto" (generated when the Roadmap page opened) or "chat"; NULL before P1.
+    origin: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    portfolio_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+
+
+class AIUsageEvent(Base):
+    """One billed AI call: used for per-student rate limits and cost review.
+
+    Stores counts only, never prompts, messages, or portfolio content.
+    """
+
+    __tablename__ = "ai_usage_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)  # chat | roadmap
+    provider: Mapped[str] = mapped_column(String(20), nullable=False)
+    web_searches: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # completed | incomplete (cut off) | invalid (unusable output) | failed
+    # (no response, e.g. API error); NULL for rows written before it existed.
+    status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        index=True
     )
 

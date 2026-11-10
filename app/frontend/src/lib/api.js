@@ -192,9 +192,19 @@ export function removeProjectModel(projectId) {
 
 // --- Career chatbot (OpenAI via the authenticated FastAPI /career/* routes) ---
 
-// Returns {reply, provider, proposal_id, proposal}.
+// Returns {reply, provider, proposal_id, proposal, resources, web_search}.
+// resources: [{title, url, provider?, description?, type?}], verified links only.
 export function sendCareerMessage(message) {
     return request('/career/chat', { method: 'POST', body: { message }, auth: true });
+}
+
+// Called when the Roadmap page opens. Generates a first roadmap draft only if
+// the student has nothing appropriate yet. Returns {status, generated, ...}:
+// "generated" (+ message_id, reply, resources, proposal_id, proposal),
+// "pending" (+ proposal_id, proposal), "approved" (+ portfolio_changed), or
+// "up_to_date".
+export function generateAutoRoadmap() {
+    return request('/career/roadmap/auto', { method: 'POST', auth: true });
 }
 
 // Whether the saved portfolio is complete enough for the assistant:
@@ -203,12 +213,12 @@ export function getCareerReadiness() {
     return request('/career/readiness', { auth: true });
 }
 
-// Saved conversation, oldest first: [{id, role, content}].
+// Saved conversation, oldest first: [{id, role, content, resources}].
 export function getCareerChatHistory() {
     return request('/career/chat/history', { auth: true });
 }
 
-// The student's approved roadmap ({id, title, goals}) or null.
+// The student's approved roadmap ({id, title, goals, portfolio_changed}) or null.
 export function getCareerRoadmap() {
     return request('/career/roadmap', { auth: true });
 }
@@ -222,7 +232,7 @@ export function updateCareerRoadmap(roadmap) {
     });
 }
 
-// Pending AI-generated proposals, newest first: [{id, title, goals}].
+// Pending AI-generated proposals, newest first: [{id, title, goals, origin}].
 export function getRoadmapProposals() {
     return request('/career/proposals', { auth: true });
 }

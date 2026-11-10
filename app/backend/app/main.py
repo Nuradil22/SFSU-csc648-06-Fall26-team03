@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .database import Base, engine
+from .migrations import run_additive_migrations
 from .routers import (
     auth,
     career_chat,
@@ -28,6 +29,8 @@ for noisy in ("httpx", "httpx2"):
 # Creates any tables that don't exist yet. It never alters existing tables, so
 # column changes to an existing table need a migration (see README).
 Base.metadata.create_all(bind=engine)
+# Adds new nullable columns to existing tables; never drops or rewrites data.
+run_additive_migrations(engine)
 
 app = FastAPI(title="Projectory API", version="0.2.0")
 
