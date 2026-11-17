@@ -16,6 +16,7 @@ from .routers import (
     experience,
     guidance,
     job_preferences,
+    model_compare,
     portfolio,
     projects,
     public,
@@ -44,7 +45,7 @@ app.add_middleware(
 )
 
 for module in (
-    auth, portfolio, education, skills, experience, certificates, job_preferences, projects, guidance, career_chat, public,
+    auth, portfolio, education, skills, experience, certificates, job_preferences, projects, guidance, career_chat, model_compare, public,
 ):
     app.include_router(module.router)
 

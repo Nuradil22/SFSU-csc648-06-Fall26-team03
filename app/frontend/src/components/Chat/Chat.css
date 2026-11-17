@@ -215,3 +215,25 @@
     background: #2c3236;
     color: #c5ccd2;
 }
+
+.chat-input-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.chat-compare-button {
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0.85;
+    height: 100%;
+}
+
+.chat-compare-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}

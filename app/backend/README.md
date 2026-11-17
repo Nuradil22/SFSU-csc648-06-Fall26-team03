@@ -197,6 +197,17 @@ See `.env.example` for every setting. For deployment (Render):
   (`OPENAI_MAX_OUTPUT_TOKENS_CHAT` / `OPENAI_MAX_OUTPUT_TOKENS_ROADMAP`,
   reasoning tokens included). A response cut off at the cap (`incomplete`) is
   rejected with a clear 502 and nothing is saved.
+  Note: `reasoning` and `web_search` domain `filters` require a GPT-5-family
+  model (verified with `gpt-5.1`); `gpt-4.x` models reject those parameters.
+- `POST /career/compare` asks two models the same question with the same
+  portfolio and the curated SFSU course records in `app/academic_catalog.py`,
+  then validates every recommended course code/title against those records and
+  reports what the models agree and disagree on. Set `MODEL_COMPARE_PAIR` to
+  choose the pair (e.g. `openai:gpt-5.1,anthropic:claude-opus-5-5`); the
+  default is the OpenAI model plus Anthropic when its key is set, otherwise
+  `COMPARE_FALLBACK_MODEL` on OpenAI. A failed provider is reported in that
+  model's `status`, never fabricated. Agreement between models is not proof of
+  accuracy — verify against the official Bulletin.
 - The duplicate-generation lock is per server process; with several workers
   two near-simultaneous page loads could each create a draft.
 

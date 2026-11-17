@@ -4,6 +4,7 @@ import ChatInput from "./ChatInput";
 import PortfolioReadinessNotice from "./PortfolioReadinessNotice";
 import { sendMessage } from "../../services/chatService";
 import {
+    compareCareerModels,
     decideRoadmapProposal,
     generateAutoRoadmap,
     getCareerChatHistory,
@@ -56,6 +57,7 @@ export default function ChatWindow({ onRoadmapApproved }) {
     // Automatic roadmap generation (P1).
     const autoStarted = useRef(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isComparing, setIsComparing] = useState(false);
     const [portfolioChanged, setPortfolioChanged] = useState(false);
 
     // {ready, missing, optional_missing} from GET /career/readiness; null
@@ -256,6 +258,40 @@ export default function ChatWindow({ onRoadmapApproved }) {
         }
     }
 
+    async function handleCompare(content) {
+        if (!content.trim() || isLoading || isGenerating || isComparing) return;
+
+        addMessage("user", content);
+
+        if (!getToken()) {
+            addMessage("error", LOGIN_MESSAGE);
+            return;
+        }
+
+        setIsComparing(true);
+
+        try {
+            const result = await compareCareerModels(content);
+            setMessages((previous) => [
+                ...previous,
+                { id: crypto.randomUUID(), role: "comparison", comparison: result }
+            ]);
+        } catch (error) {
+            console.error("Model comparison error:", error);
+
+            if (error.status === 409) {
+                refreshReadiness();
+            } else {
+                addMessage(
+                    "error",
+                    error.status === 401 ? LOGIN_MESSAGE : error.message
+                );
+            }
+        } finally {
+            setIsComparing(false);
+        }
+    }
+
     async function handleDecide(message, decision) {
         patchMessage(message.id, { busy: true, error: null });
 
@@ -316,7 +352,8 @@ export default function ChatWindow({ onRoadmapApproved }) {
 
                     <ChatInput
                         onSend={handleSend}
-                        disabled={isLoading || isGenerating}
+                        onCompare={handleCompare}
+                        disabled={isLoading || isGenerating || isComparing}
                     />
                 </>
             )}

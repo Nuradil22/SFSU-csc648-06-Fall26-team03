@@ -1,10 +1,15 @@
 import RoadmapProposalCard from "./RoadmapProposalCard";
 import ResourceList from "../Roadmap/ResourceList";
+import ModelComparison from "./ModelComparison";
 
-// role is "user", "assistant", "error", or "proposal".
+// role is "user", "assistant", "error", "proposal", or "comparison".
 export default function MessageBubble({ message, onDecide }) {
     if (message.role === "proposal") {
         return <RoadmapProposalCard message={message} onDecide={onDecide} />;
+    }
+
+    if (message.role === "comparison") {
+        return <ModelComparison data={message.comparison} />;
     }
 
     const isUser = message.role === "user";

@@ -69,6 +69,13 @@ class Settings(BaseSettings):
     openai_max_output_tokens_chat: int = 3000
     openai_max_output_tokens_roadmap: int = 10000
 
+    # Two-model comparison (/career/compare). Comma-separated "provider:model"
+    # pair, e.g. "openai:gpt-5.1,anthropic:claude-opus-5-5". Empty: compare the
+    # configured OpenAI model with Anthropic when its key is set, otherwise
+    # with compare_fallback_model on OpenAI.
+    model_compare_pair: str = ""
+    compare_fallback_model: str = "gpt-4o-mini"
+
     # Per-student limits on billed AI calls (checked before calling the provider).
     ai_roadmap_generations_per_day: int = 5
     ai_chat_messages_per_hour: int = 30

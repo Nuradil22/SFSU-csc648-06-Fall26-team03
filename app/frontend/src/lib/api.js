@@ -241,3 +241,13 @@ export function getRoadmapProposals() {
 export function decideRoadmapProposal(proposalId, decision) {
     return request(`/career/proposals/${proposalId}/${decision}`, { method: 'POST', auth: true });
 }
+
+// Two-model comparison: asks the configured pair of models the same question
+// with the same portfolio and curated SFSU course records. Returns
+// {question, models: [{label, provider, model, status, error,
+// recommendations: [{course_code, title, category, rationale,
+// prerequisites_claimed, validation}]}], comparison, disclaimer}. A failed
+// provider is reported in that model's status, never fabricated.
+export function compareCareerModels(question) {
+    return request('/career/compare', { method: 'POST', body: { question }, auth: true });
+}
