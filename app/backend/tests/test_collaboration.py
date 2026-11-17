@@ -207,8 +207,8 @@ def test_legacy_model_is_backfilled_as_v1(client, auth):
 def test_existing_model_gets_implicit_revision_row(client, auth, monkeypatch):
     """A project whose model predates the revisions table still shows it in
     the history (synthesized v1), and a later upload back-fills it."""
-    from app.database import SessionLocal
     from app import models
+    from app.database import SessionLocal
 
     pid = _project(client, auth)
     _upload(client, auth, pid, "old.glb")

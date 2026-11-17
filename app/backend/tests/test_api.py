@@ -231,8 +231,8 @@ def test_guidance_failure_keeps_previous(client, auth, monkeypatch):
 def test_payload_excludes_private_fields(client, auth):
     client.patch("/portfolio/me", headers=auth, json={"location": "SF"})
     client.post("/portfolio/me/links", headers=auth, json={"label": "Site", "url": "https://sam.dev"})
-    from app.database import SessionLocal
     from app import models
+    from app.database import SessionLocal
     with SessionLocal() as db:
         payload = ai.build_portfolio_payload(db.query(models.Portfolio).one())
     text = json.dumps(payload)
@@ -355,8 +355,8 @@ def test_ai_payload_includes_certificates_not_salary(client, auth):
     client.post("/portfolio/me/job-preferences", headers=auth, json={
         "role": "Security Analyst", "location": "Oakland, CA", "min_salary": 98765,
     })
-    from app.database import SessionLocal
     from app import models
+    from app.database import SessionLocal
     with SessionLocal() as db:
         payload = ai.build_portfolio_payload(db.query(models.Portfolio).one())
     text = json.dumps(payload)

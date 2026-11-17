@@ -23,7 +23,6 @@ from app.routers.model_compare import (
 
 from .test_career_chat import _with_portfolio
 
-
 # --- Curated record validation ----------------------------------------------
 
 def test_normalize_code_variants():

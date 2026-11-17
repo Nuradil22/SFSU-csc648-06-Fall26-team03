@@ -24,7 +24,6 @@ from ..config import settings
 from ..database import get_db
 from ..deps import get_current_portfolio
 
-
 router = APIRouter(
     prefix="/career",
     tags=["career chatbot and roadmaps"]
