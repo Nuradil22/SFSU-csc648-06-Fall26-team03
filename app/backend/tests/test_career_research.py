@@ -16,9 +16,12 @@ from app.routers.career_chat import wants_research, wants_roadmap
 
 from . import openai_fakes
 from .conftest import signup
-from .openai_fakes import FakeOpenAI, plan, resource, search_call
+from .openai_fakes import FakeOpenAI, educational_plan, plan, researched, resource, search_call
 
 BULLETIN = "https://bulletin.sfsu.edu/courses/csc/"
+# A verifiable course name for roadmap fixtures ("CSC courses" names no
+# offering and shares no subject with the student).
+DB = "Database Systems"
 COURSERA = "https://www.coursera.org/professional-certificates/google-data-analytics"
 
 
@@ -74,14 +77,15 @@ def test_roadmap_and_research_intent_detection():
 
 # --- Automatic generation -------------------------------------------------------
 
-def test_auto_generates_once_and_refresh_returns_the_same_draft(client, auth):
+def test_auto_generates_once_and_refresh_returns_the_same_draft(client, auth, research):
     _ready(client, auth)
+    research.script = [researched(educational_plan())]
 
     first = client.post("/career/roadmap/auto", headers=auth)
     assert first.status_code == 200, first.text
     body = first.json()
     assert body["status"] == "generated" and body["generated"] is True
-    assert body["proposal"]["goals"]
+    assert body["proposal"]["goals"] and body["proposal"]["educational"] is True
 
     again = client.post("/career/roadmap/auto", headers=auth).json()
     assert again == {
@@ -97,28 +101,30 @@ def test_auto_generates_once_and_refresh_returns_the_same_draft(client, auth):
     assert [e.kind for e in _usage()] == ["auto_roadmap"]
 
 
-def test_auto_never_replaces_an_approved_roadmap_and_flags_portfolio_changes(client, auth):
+def test_auto_never_replaces_an_approved_roadmap_and_flags_portfolio_changes(client, auth, research):
     _ready(client, auth)
+    research.script = [researched(educational_plan())]
     pid = client.post("/career/roadmap/auto", headers=auth).json()["proposal_id"]
     client.post(f"/career/proposals/{pid}/approve", headers=auth)
     approved = client.get("/career/roadmap", headers=auth).json()
     assert approved["portfolio_changed"] is False
 
     r = client.post("/career/roadmap/auto", headers=auth).json()
-    assert r == {"status": "approved", "generated": False, "portfolio_changed": False}
+    assert r == {"status": "approved", "generated": False, "portfolio_changed": False, "educational": True}
 
     # A dashboard change is recognized, but nothing is regenerated or replaced.
     _add(client, auth, "/portfolio/me/skills", {"name": "Docker"})
     r = client.post("/career/roadmap/auto", headers=auth).json()
-    assert r == {"status": "approved", "generated": False, "portfolio_changed": True}
+    assert r == {"status": "approved", "generated": False, "portfolio_changed": True, "educational": True}
     now = client.get("/career/roadmap", headers=auth).json()
     assert now["portfolio_changed"] is True
     assert (now["title"], now["goals"]) == (approved["title"], approved["goals"])
     assert client.get("/career/proposals", headers=auth).json() == []
 
 
-def test_rejected_auto_draft_is_not_regenerated_until_the_portfolio_changes(client, auth):
+def test_rejected_auto_draft_is_not_regenerated_until_the_portfolio_changes(client, auth, research):
     _ready(client, auth)
+    research.script = [researched(educational_plan()), researched(educational_plan())]
     pid = client.post("/career/roadmap/auto", headers=auth).json()["proposal_id"]
     client.post(f"/career/proposals/{pid}/reject", headers=auth)
 
@@ -134,7 +140,7 @@ def test_incomplete_portfolio_blocks_auto_and_chat_without_any_ai_call(client, a
     assert client.post("/career/roadmap/auto", headers=auth).status_code == 409
     r = client.post("/career/chat", headers=auth, json={"message": "Make me a new roadmap"})
     assert r.status_code == 409
-    assert "complete your Projectory portfolio" in r.json()["detail"]
+    assert "To create your personalized roadmap, I still need" in r.json()["detail"]
 
     assert research.calls == []
     assert _usage() == []
@@ -142,8 +148,13 @@ def test_incomplete_portfolio_blocks_auto_and_chat_without_any_ai_call(client, a
     assert client.get("/career/chat/history", headers=auth).json() == []
 
 
-def test_auto_drafts_are_per_student(client, auth):
+def test_auto_drafts_are_per_student(client, auth, research):
     other = signup(client, email="other-p1@sfsu.edu")
+    research.script = [
+        researched(educational_plan()),
+        researched(educational_plan(serves="UX Designer", name="Interaction Design",
+                                    url="https://bulletin.sfsu.edu/courses/des/", stage="UX research")),
+    ]
     _ready(client, auth)
     _ready(client, other, skills=("Figma", "Sketch", "UX research"), role="UX Designer")
 
@@ -157,10 +168,11 @@ def test_auto_drafts_are_per_student(client, auth):
 
 # --- Explicit requests ------------------------------------------------------------
 
-def test_explicit_request_uses_latest_portfolio_and_supersedes_older_drafts(client, auth, fake):
+def test_explicit_request_uses_latest_portfolio_and_supersedes_older_drafts(client, auth, research):
+    fake = research
     _ready(client, auth)
-    fake.script = [{"parsed": {"proposal": plan(title="First")}},
-                   {"parsed": {"proposal": plan(title="Second")}}]
+    fake.script = [researched(educational_plan(title="First")),
+                   researched(educational_plan(title="Second"))]
 
     first = client.post("/career/chat", headers=auth, json={"message": "Make me a roadmap"}).json()
     assert "Docker" not in fake.calls[0]["instructions"]
@@ -179,9 +191,10 @@ def test_explicit_request_uses_latest_portfolio_and_supersedes_older_drafts(clie
     assert [p["id"] for p in client.get("/career/proposals", headers=auth).json()] == [second["proposal_id"]]
 
 
-def test_explicit_request_keeps_approved_roadmap_until_replacement_is_approved(client, auth, fake):
+def test_explicit_request_keeps_approved_roadmap_until_replacement_is_approved(client, auth, research):
+    fake = research
     _ready(client, auth)
-    fake.script = [{"parsed": {"proposal": plan(title="Original")}}]
+    fake.script = [researched(educational_plan(title="Original"))]
     pid = client.post("/career/chat", headers=auth, json={"message": "Create my roadmap"}).json()["proposal_id"]
     client.post(f"/career/proposals/{pid}/approve", headers=auth)
 
@@ -193,7 +206,7 @@ def test_explicit_request_keeps_approved_roadmap_until_replacement_is_approved(c
     _add(client, auth, "/portfolio/me/skills", {"name": "Spark"})
     assert client.get("/career/roadmap", headers=auth).json()["portfolio_changed"] is True
 
-    fake.script = [{"parsed": {"proposal": plan(title="Updated")}}]
+    fake.script = [researched(educational_plan(title="Updated"))]
     new = client.post("/career/chat", headers=auth, json={"message": "Update my roadmap"}).json()
     assert "portfolio has changed since their approved roadmap" in fake.calls[-1]["instructions"]
 
@@ -270,7 +283,13 @@ def test_disabled_search_sends_no_tools_and_shows_no_links(client, auth, fake):
 
     assert "tools" not in fake.calls[0]
     assert body["resources"] == [] and body["web_search"] is False
-    assert "resources" not in body["proposal"]["goals"][0]["milestones"][0]
+    # Nothing verified, so no roadmap; the AI's reply (and its link) is replaced.
+    assert body["proposal"] is None and body["roadmap_unverified"] is True
+    assert "https://" not in body["reply"]
+
+    # Ordinary chat: unverified links in the reply are removed.
+    fake.script = [{"parsed": {"reply": "Try https://bulletin.sfsu.edu/courses/csc/ soon."}}]
+    body = client.post("/career/chat", headers=auth, json={"message": "Any tips?"}).json()
     assert body["reply"] == "Try [unverified link removed] soon."
 
 
@@ -283,14 +302,14 @@ def test_only_urls_returned_by_the_search_are_kept(client, auth, research):
         "parsed": {
             "reply": f"See {BULLETIN} and https://www.edx.org/made-up-course.",
             "resources": [
-                resource("CSC courses", "https://www.bulletin.sfsu.edu/courses/csc"),  # same page
+                resource(DB, "https://www.bulletin.sfsu.edu/courses/csc"),  # same page
                 resource("Google Data Analytics", COURSERA, provider="Coursera"),
                 resource("Invented edX course", "https://www.edx.org/made-up-course", provider="edX"),
                 resource("Insecure", "http://insecure.example.edu/page"),
                 resource("Duplicate", BULLETIN),
             ],
             "proposal": plan(
-                [resource("CSC courses", BULLETIN), resource("Fake", "https://example.com/fake")],
+                [resource(DB, BULLETIN), resource("Fake", "https://example.com/fake")],
                 [resource("Google Data Analytics", COURSERA, provider="Coursera")],
             ),
         },
@@ -299,7 +318,7 @@ def test_only_urls_returned_by_the_search_are_kept(client, auth, research):
 
     assert body["web_search"] is True
     assert [(r["title"], r["url"], r["type"]) for r in body["resources"]] == [
-        ("CSC courses", BULLETIN, "sfsu"),  # the source's own URL is used
+        (DB, BULLETIN, "sfsu"),  # the source's own URL is used
         ("Google Data Analytics", COURSERA, "external"),
     ]
     assert body["resources"][1]["provider"] == "Coursera"
@@ -332,14 +351,14 @@ def test_revision_without_search_keeps_only_links_already_on_the_roadmap(client,
     _ready(client, auth)
     research.script = [{
         "output": [search_call(BULLETIN)],
-        "parsed": {"proposal": plan([resource("CSC courses", BULLETIN)])},
+        "parsed": {"proposal": plan([resource(DB, BULLETIN)])},
     }]
     pid = client.post("/career/chat", headers=auth, json={"message": "Make me a roadmap"}).json()["proposal_id"]
     client.post(f"/career/proposals/{pid}/approve", headers=auth)
 
     monkeypatch.setattr(settings, "openai_web_search", False)
     research.script = [{"parsed": {"proposal": plan(
-        [resource("CSC courses", BULLETIN), resource("New guess", "https://www.edx.org/guess")]
+        [resource(DB, BULLETIN), resource("New guess", "https://www.edx.org/guess")]
     )}}]
     body = client.post("/career/chat", headers=auth, json={"message": "Revise my roadmap"}).json()
     assert [r["url"] for r in body["proposal"]["goals"][0]["milestones"][0]["resources"]] == [BULLETIN]
@@ -460,7 +479,7 @@ def test_cut_off_roadmap_gets_a_clear_error_and_its_usage_is_logged(client, auth
         "incomplete", 2, 21000, 10000)
 
     # The failed attempt counts, so a retry is allowed but not unbounded.
-    research.script = [{"parsed": {"proposal": plan()}}]
+    research.script = [researched(educational_plan())]
     assert client.post("/career/roadmap/auto", headers=auth).json()["status"] == "generated"
     assert [e.status for e in _usage()] == ["incomplete", "completed"]
 

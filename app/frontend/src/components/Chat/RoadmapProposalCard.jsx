@@ -1,4 +1,5 @@
 import RoadmapTimeline from "../Roadmap/RoadmapTimeline";
+import { proposalReview } from "../../lib/educational";
 
 const STATUS_LABELS = {
   approved: "Approved",
@@ -9,8 +10,13 @@ const STATUS_LABELS = {
 
 // An AI-generated roadmap proposal awaiting the student's decision.
 // Nothing becomes the official roadmap until "Approve" succeeds on the backend.
+// Only a draft the backend marks educational (verified courses, programs, or
+// certificates) can be approved; any other pending draft (or one without the
+// flag) explains why, and can still be rejected.
 export default function RoadmapProposalCard({ message, onDecide }) {
   const { proposal, status, busy, error } = message;
+  const { canApprove, notice } = proposalReview(proposal, status);
+  const noticeId = `${message.id}-educational`;
 
   return (
     <div className="chat-proposal">
@@ -25,13 +31,20 @@ export default function RoadmapProposalCard({ message, onDecide }) {
 
       <RoadmapTimeline roadmap={proposal} />
 
+      {notice && (
+        <p id={noticeId} className="chat-proposal-unverified" role="note">
+          {notice}
+        </p>
+      )}
+
       {status === "pending" && (
         <div className="chat-proposal-actions">
           <button
             type="button"
             className="chat-approve"
-            disabled={busy}
-            onClick={() => onDecide(message, "approve")}
+            disabled={busy || !canApprove}
+            aria-describedby={notice ? noticeId : undefined}
+            onClick={() => canApprove && onDecide(message, "approve")}
           >
             Approve
           </button>

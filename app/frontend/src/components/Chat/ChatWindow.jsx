@@ -60,25 +60,16 @@ export default function ChatWindow({ onRoadmapApproved }) {
 
     // {ready, missing, optional_missing} from GET /career/readiness; null
     // until loaded (or if it fails; the backend still enforces the check).
+    // "ready" only gates roadmaps: the chat itself is always available.
     const [readiness, setReadiness] = useState(null);
-    const [readinessSettled, setReadinessSettled] = useState(false);
-    const isBlocked = Boolean(readiness && !readiness.ready);
-
-    // The welcome invites the student to chat, so it is only shown once the
-    // portfolio is known to be ready (or the check could not run; logged-out
-    // visitors keep the usual welcome). Prevents it flashing before the notice.
-    const showWelcome = !getToken() || (readinessSettled && !isBlocked);
-    const visibleMessages = showWelcome
-        ? messages
-        : messages.filter((m) => m.id !== "welcome");
+    const roadmapBlocked = Boolean(readiness && !readiness.ready);
 
     const refreshReadiness = useCallback(() => {
         if (!getToken()) return;
 
         getCareerReadiness()
             .then(setReadiness)
-            .catch((error) => console.error("Portfolio readiness error:", error))
-            .finally(() => setReadinessSettled(true));
+            .catch((error) => console.error("Portfolio readiness error:", error));
     }, []);
 
     // Check on open, and again whenever the student returns to this tab
@@ -188,6 +179,15 @@ export default function ChatWindow({ onRoadmapApproved }) {
                         `history-${result.message_id}`
                     );
                     addProposals([proposalMessage(result.proposal_id, result.proposal)]);
+                } else if (result.status === "unverified") {
+                    // Research found no verified course, program, or
+                    // certificate: no draft, just the explanation.
+                    addMessage(
+                        "assistant",
+                        result.reply,
+                        result.resources || [],
+                        `history-${result.message_id}`
+                    );
                 } else if (result.status === "pending") {
                     addProposals([proposalMessage(result.proposal_id, result.proposal)]);
                 } else if (result.status === "approved") {
@@ -243,7 +243,10 @@ export default function ChatWindow({ onRoadmapApproved }) {
             console.error("Career assistant error:", error);
 
             if (error.status === 409) {
-                // Portfolio incomplete: show the notice with dashboard links.
+                // A roadmap was requested before the required portfolio
+                // details were saved: the backend says exactly what is
+                // missing; the notice links to where to add it.
+                addMessage("error", error.message);
                 refreshReadiness();
             } else {
                 addMessage(
@@ -277,12 +280,12 @@ export default function ChatWindow({ onRoadmapApproved }) {
 
     return (
         <div className="chat-window">
-            {/* Incomplete portfolio: only the notice pointing to the existing
-                dashboard options; the conversation returns once unlocked. */}
-            {isBlocked ? (
+            {/* Missing roadmap essentials: a notice pointing to the existing
+                dashboard options, above a conversation that stays open. */}
+            {roadmapBlocked && (
                 <PortfolioReadinessNotice missing={readiness.missing} />
-            ) : (
-                <>
+            )}
+            <>
                     {isGenerating && (
                         <p className="chat-auto-status" role="status">
                             Analyzing your portfolio and researching courses,
@@ -291,7 +294,7 @@ export default function ChatWindow({ onRoadmapApproved }) {
                         </p>
                     )}
 
-                    {portfolioChanged && !isGenerating && (
+                    {portfolioChanged && !isGenerating && !roadmapBlocked && (
                         <div className="chat-portfolio-changed" role="status">
                             <p>
                                 Your portfolio has changed since your roadmap was
@@ -309,7 +312,7 @@ export default function ChatWindow({ onRoadmapApproved }) {
                     )}
 
                     <MessageList
-                        messages={visibleMessages}
+                        messages={messages}
                         isLoading={isLoading}
                         onDecide={handleDecide}
                     />
@@ -318,8 +321,7 @@ export default function ChatWindow({ onRoadmapApproved }) {
                         onSend={handleSend}
                         disabled={isLoading || isGenerating}
                     />
-                </>
-            )}
+            </>
         </div>
     );
 }

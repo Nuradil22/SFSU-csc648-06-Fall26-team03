@@ -92,6 +92,25 @@
     color: #1e6b3d;
 }
 
+.chat-proposal-unverified {
+    margin: 10px 0 0;
+    padding: 8px 10px;
+    border-left: 3px solid #b7791f;
+    background: #fff8e6;
+    font-size: 0.85rem;
+    color: #5c3d00;
+}
+
+.chat-approve:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.app.dark .chat-proposal-unverified {
+    background: #2d2615;
+    color: #f3d9a4;
+}
+
 .chat-proposal-error {
     margin: 10px 0 0;
     font-size: 0.85rem;
