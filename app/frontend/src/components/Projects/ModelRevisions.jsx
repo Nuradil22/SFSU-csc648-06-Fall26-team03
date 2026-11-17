@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getModelRevisions, uploadModelRevision } from "../../lib/api";
-import "./ProjectEngagement.css";
+import "./ModelRevisions.css";
 
 // Revision history for a project's 3D model (M4 design iterations). Viewers
 // can pick a version to display; the owner can also upload a new version with
@@ -61,6 +61,7 @@ export default function ModelRevisions({ projectId, canEdit, onSelectRevision })
                         <button
                             type="button"
                             className={`revision-item ${revision.url === selectedPath ? "selected" : ""}`}
+                            aria-pressed={revision.url === selectedPath}
                             onClick={() => select(revision)}
                         >
                             <span className="revision-label">
@@ -70,7 +71,9 @@ export default function ModelRevisions({ projectId, canEdit, onSelectRevision })
                             <span className="revision-meta">
                                 {revision.original_filename}
                                 {" · "}
-                                {new Date(revision.created_at).toLocaleDateString()}
+                                <time dateTime={revision.created_at}>
+                                    {new Date(revision.created_at).toLocaleDateString()}
+                                </time>
                             </span>
                             {revision.change_note && (
                                 <span className="revision-note">{revision.change_note}</span>

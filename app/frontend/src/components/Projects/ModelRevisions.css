@@ -1,0 +1,83 @@
+/* Revision history for a project's 3D model (M4). Uses the app's accent
+   (#3092c0, from the banner gradient) for the selected version. */
+
+.model-revisions {
+    margin-top: 10px;
+}
+
+.revision-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.revision-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: transparent;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.revision-item:hover {
+    border-color: rgba(48, 146, 192, 0.7);
+}
+
+.revision-item.selected {
+    border-color: #3092c0;
+    outline: 1px solid #3092c0;
+    background: rgba(48, 146, 192, 0.08);
+}
+
+.revision-label {
+    font-weight: 700;
+}
+
+.revision-label em {
+    font-weight: 400;
+    font-style: normal;
+    color: #3092c0;
+}
+
+.revision-meta {
+    font-size: 0.78rem;
+    opacity: 0.65;
+}
+
+.revision-note {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.revision-upload {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    margin-top: 8px;
+}
+
+.revision-upload label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 560px) {
+    .revision-upload {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

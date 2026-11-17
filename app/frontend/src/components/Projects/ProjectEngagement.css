@@ -18,6 +18,11 @@
     background: transparent;
     cursor: pointer;
     font-size: 0.95rem;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.like-button:not(:disabled):hover {
+    border-color: #d6336c;
 }
 
 .like-button.liked {
@@ -65,6 +70,11 @@
     color: #b00020;
     cursor: pointer;
     font-size: 0.8rem;
+    padding: 2px 6px;
+}
+
+.comment-delete:hover {
+    text-decoration: underline;
 }
 
 .comment-body {
@@ -86,70 +96,9 @@
     padding: 6px 8px;
 }
 
-/* Model revisions (shared styles live here too) */
-
-.model-revisions {
-    margin-top: 10px;
-}
-
-.revision-list {
-    list-style: none;
-    margin: 0 0 10px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.revision-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    width: 100%;
-    text-align: left;
-    border: 1px solid rgba(128, 128, 128, 0.35);
-    border-radius: 8px;
-    padding: 6px 10px;
-    background: transparent;
-    cursor: pointer;
-}
-
-.revision-item.selected {
-    border-color: #3366cc;
-    outline: 1px solid #3366cc;
-}
-
-.revision-label {
-    font-weight: 700;
-}
-
-.revision-label em {
-    font-weight: 400;
-    font-style: normal;
-    color: #3366cc;
-}
-
-.revision-meta {
-    font-size: 0.78rem;
-    opacity: 0.65;
-}
-
-.revision-note {
-    font-size: 0.85rem;
-    opacity: 0.9;
-}
-
-.revision-upload {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: flex-end;
-    margin-top: 8px;
-}
-
-.revision-upload label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.85rem;
+@media (max-width: 560px) {
+    .comment-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }

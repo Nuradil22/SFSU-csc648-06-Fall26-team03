@@ -33,6 +33,7 @@
     font-family: monospace;
     border-bottom: 1px solid rgba(128, 128, 128, 0.3);
     padding-bottom: 4px;
+    overflow-wrap: anywhere;
 }
 
 .compare-column ul {
@@ -72,6 +73,7 @@
 
 .validation-badge {
     font-size: 0.7rem;
+    font-weight: 600;
     padding: 1px 6px;
     border-radius: 8px;
     white-space: nowrap;

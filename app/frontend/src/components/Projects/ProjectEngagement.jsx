@@ -114,7 +114,9 @@ export default function ProjectEngagement({ projectId }) {
                         <li key={comment.id} className="comment-item">
                             <div className="comment-head">
                                 <strong>{comment.author_name}</strong>
-                                <time>{new Date(comment.created_at).toLocaleString()}</time>
+                                <time dateTime={comment.created_at}>
+                                    {new Date(comment.created_at).toLocaleString()}
+                                </time>
                                 {comment.can_delete && (
                                     <button
                                         type="button"
@@ -144,7 +146,7 @@ export default function ProjectEngagement({ projectId }) {
                         aria-label="Write a comment"
                     />
                     <button type="submit" disabled={busy || !draft.trim()}>
-                        Post comment
+                        {busy ? "Posting…" : "Post comment"}
                     </button>
                 </form>
             )}
