@@ -350,6 +350,10 @@ export default function ChatWindow({ onRoadmapApproved }) {
                         onDecide={handleDecide}
                     />
 
+                    {isComparing && (
+                        <p className="engagement-hint" role="status">Comparing models…</p>
+                    )}
+
                     <ChatInput
                         onSend={handleSend}
                         onCompare={handleCompare}

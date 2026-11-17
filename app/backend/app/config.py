@@ -1,9 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEV_SECRET_KEY = "dev-secret-change-me"
+
 
 class Settings(BaseSettings):
+    # Deployment environment. "production" requires a real SECRET_KEY (see
+    # ensure_production_secret); anything else keeps the dev default working.
+    environment: str = "development"
     database_url: str = "sqlite:///./careergps.db"
-    secret_key: str = "dev-secret-change-me"
+    secret_key: str = DEV_SECRET_KEY
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
     allowed_origins: str = "http://localhost:5173"
@@ -87,6 +92,20 @@ class Settings(BaseSettings):
     @property
     def allowed_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+
+def ensure_production_secret(config: Settings) -> None:
+    """Refuse to run in production with a missing or default SECRET_KEY.
+
+    JWTs signed with the shipped default are forgeable by anyone who has read
+    this repository, so production deployments must provide their own key.
+    """
+    if config.environment.lower() == "production" and config.secret_key.strip() in ("", DEV_SECRET_KEY):
+        raise RuntimeError(
+            "Refusing to start: SECRET_KEY is missing or set to the development "
+            "default while ENVIRONMENT=production. Set SECRET_KEY to a strong "
+            "random value."
+        )
 
 
 settings = Settings()

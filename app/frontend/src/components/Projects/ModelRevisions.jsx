@@ -10,14 +10,28 @@ export default function ModelRevisions({ projectId, canEdit, onSelectRevision })
     const [selectedPath, setSelectedPath] = useState(null);
     const [note, setNote] = useState("");
     const [busy, setBusy] = useState(false);
+    const [loadedId, setLoadedId] = useState(null);
     const [error, setError] = useState("");
     const fileInput = useRef(null);
+
+    // Derived, not stored: a new projectId shows the loading state until its
+    // fetch resolves (avoids resetting state synchronously inside the effect).
+    const loading = loadedId !== projectId;
 
     useEffect(() => {
         let live = true;
         getModelRevisions(projectId)
-            .then((list) => live && setRevisions(list))
-            .catch((err) => live && setError(err.message || "Could not load revision history."));
+            .then((list) => {
+                if (!live) return;
+                setRevisions(list);
+                setLoadedId(projectId);
+            })
+            .catch((err) => {
+                if (!live) return;
+                setRevisions([]);
+                setError(err.message || "Could not load revision history.");
+                setLoadedId(projectId);
+            });
         return () => { live = false; };
     }, [projectId]);
 
@@ -47,6 +61,9 @@ export default function ModelRevisions({ projectId, canEdit, onSelectRevision })
         }
     }
 
+    if (loading) {
+        return <p className="engagement-hint">Loading revision history…</p>;
+    }
     if (error && revisions.length === 0) {
         return <p className="form-error" role="alert">{error}</p>;
     }

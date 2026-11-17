@@ -20,11 +20,13 @@
 
 .field{
     width: 100%;
-    margin: 8px;
+    margin: 8px 0;
     padding: 5px;
     line-height: 25px;
     border: 1px solid navy;
     border-radius: 4px;
+    font: inherit;
+    box-sizing: border-box;
 }
 
 .app.dark .field{
@@ -38,6 +40,7 @@
     border-radius: 4px;
     background-color: #3092c0;
     color: whitesmoke;
+    font: inherit;
 }
 
 .app.dark .form-btn:hover{
@@ -58,4 +61,19 @@
 .form-error{
     color: #c0392b;
     margin: 4px 0;
+}
+
+.app.dark .form-error{
+    color: #ff8a80;
+}
+
+@media (max-width: 760px){
+    .form{
+        padding: 8%;
+    }
+
+    .fields{
+        padding-left: 5%;
+        padding-right: 5%;
+    }
 }

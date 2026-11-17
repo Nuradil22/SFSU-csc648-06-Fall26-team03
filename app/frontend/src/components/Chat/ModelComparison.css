@@ -21,10 +21,19 @@
     margin: 6px 0;
 }
 
+.app.dark .compare-error,
+.app.dark .compare-rec-issue {
+    color: #ff8a80;
+}
+
 .compare-columns {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
     gap: 12px;
+}
+
+.compare-column {
+    min-width: 0;
 }
 
 .compare-column h5 {

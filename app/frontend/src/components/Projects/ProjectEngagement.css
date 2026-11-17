@@ -92,8 +92,62 @@
 
 .comment-form textarea {
     flex: 1;
+    min-width: 0;
     resize: vertical;
-    padding: 6px 8px;
+    padding: 8px;
+    border: 1px solid #999;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.comment-form button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background-color: #263b59;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.comment-form button:hover:not(:disabled) {
+    background-color: #344e73;
+}
+
+.comment-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.app.dark .comment-form button {
+    background-color: #3092c0;
+}
+
+.app.dark .comment-form button:hover:not(:disabled) {
+    background-color: #44a8d6;
+}
+
+.comment-body {
+    overflow-wrap: anywhere;
+}
+
+.like-button {
+    font: inherit;
+    color: inherit;
+}
+
+.like-button.liked {
+    color: #d6336c;
+}
+
+.comment-head {
+    flex-wrap: wrap;
+}
+
+.app.dark .comment-delete {
+    color: #ff8a80;
 }
 
 @media (max-width: 560px) {

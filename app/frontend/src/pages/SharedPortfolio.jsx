@@ -15,14 +15,20 @@ function formatDate(isoDate) {
 // Read-only portfolio for visitors with a share link (R17). No login needed.
 function SharedPortfolio({ darkMode }) {
     const { shareToken } = useParams();
-    const [portfolio, setPortfolio] = useState(null);
-    const [error, setError] = useState("");
+    const [result, setResult] = useState({ token: null, portfolio: null, error: "" });
 
     useEffect(() => {
+        let cancelled = false;
         getSharedPortfolio(shareToken)
-            .then(setPortfolio)
-            .catch((err) => setError(err.message));
+            .then((data) => !cancelled && setResult({ token: shareToken, portfolio: data, error: "" }))
+            .catch((err) => !cancelled && setResult({ token: shareToken, portfolio: null, error: err.message }));
+        return () => { cancelled = true; };
     }, [shareToken]);
+
+    // Ignore results for an older token; a change re-renders as loading.
+    const { portfolio, error } = result.token === shareToken
+        ? result
+        : { portfolio: null, error: "" };
 
     if (error) {
         return <main><p className="box shared-section">{error}</p></main>;

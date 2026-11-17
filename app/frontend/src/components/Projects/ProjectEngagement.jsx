@@ -19,7 +19,8 @@ export default function ProjectEngagement({ projectId }) {
     const [comments, setComments] = useState([]);
     const [draft, setDraft] = useState("");
     const [loading, setLoading] = useState(true);
-    const [busy, setBusy] = useState(false);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [busy, setBusy] = useState(""); // "", "like", "comment", or "delete"
     const [error, setError] = useState("");
 
     const loggedIn = Boolean(getToken());
@@ -33,14 +34,18 @@ export default function ProjectEngagement({ projectId }) {
                 setLiked(engagement.liked_by_me);
                 setComments(list);
             })
-            .catch((err) => live && setError(err.message || "Could not load comments."))
+            .catch((err) => {
+                if (!live) return;
+                setLoadFailed(true);
+                setError(err.message || "Could not load comments.");
+            })
             .finally(() => live && setLoading(false));
         return () => { live = false; };
     }, [projectId]);
 
     async function toggleLike() {
         if (!loggedIn || busy) return;
-        setBusy(true);
+        setBusy("like");
         setError("");
         try {
             const result = liked
@@ -51,7 +56,7 @@ export default function ProjectEngagement({ projectId }) {
         } catch (err) {
             setError(err.message);
         } finally {
-            setBusy(false);
+            setBusy("");
         }
     }
 
@@ -59,7 +64,7 @@ export default function ProjectEngagement({ projectId }) {
         event.preventDefault();
         const body = draft.trim();
         if (!body || busy) return;
-        setBusy(true);
+        setBusy("comment");
         setError("");
         try {
             const comment = await addComment(projectId, body);
@@ -68,13 +73,13 @@ export default function ProjectEngagement({ projectId }) {
         } catch (err) {
             setError(err.message);
         } finally {
-            setBusy(false);
+            setBusy("");
         }
     }
 
     async function removeComment(commentId) {
         if (busy) return;
-        setBusy(true);
+        setBusy("delete");
         setError("");
         try {
             await deleteComment(projectId, commentId);
@@ -106,7 +111,7 @@ export default function ProjectEngagement({ projectId }) {
 
             {loading ? (
                 <p className="engagement-hint">Loading comments…</p>
-            ) : comments.length === 0 ? (
+            ) : loadFailed ? null : comments.length === 0 ? (
                 <p className="engagement-hint">No comments yet.</p>
             ) : (
                 <ul className="comment-list">
@@ -146,7 +151,7 @@ export default function ProjectEngagement({ projectId }) {
                         aria-label="Write a comment"
                     />
                     <button type="submit" disabled={busy || !draft.trim()}>
-                        {busy ? "Posting…" : "Post comment"}
+                        {busy === "comment" ? "Posting…" : "Post comment"}
                     </button>
                 </form>
             )}

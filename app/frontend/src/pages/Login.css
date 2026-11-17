@@ -1,6 +1,6 @@
 .login-page{
     display: flex;
-    height: calc(100vh - 80px);
+    min-height: calc(100vh - 80px);
 }
 
 .auth-panel, .auth-art{
@@ -34,4 +34,18 @@
     width: 100%;
     height: auto;
     object-fit: cover;
+}
+
+@media (max-width: 760px){
+    .login-page{
+        flex-direction: column;
+    }
+
+    .auth-panel, .auth-art{
+        width: 100%;
+    }
+
+    .auth-art{
+        max-height: 30vh;
+    }
 }

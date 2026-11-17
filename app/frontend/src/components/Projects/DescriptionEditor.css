@@ -1,7 +1,7 @@
 .description-editor {
     display: flex;
     flex-direction: column;
-    align-items: left;
+    align-items: flex-start;
     justify-content: center;
     margin-top: 32px;
     padding: 24px;
@@ -68,7 +68,7 @@
 }
 
 .app.dark .description-editor input,
-.app.dark .descriptioneditor textarea {
+.app.dark .description-editor textarea {
     background-color: lightgray;
 }
 

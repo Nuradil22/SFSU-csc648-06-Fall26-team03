@@ -30,7 +30,7 @@ function Project({name, date, type, description, images = [], links = [], model,
 
                     <section className="project-overview">
                         <h3>Project Overview</h3>
-                        <ProjectDescription blocks={description} darkmode={darkMode}/>
+                        <ProjectDescription blocks={description} darkMode={darkMode}/>
                     </section>
 
                     {images.length > 0 && (

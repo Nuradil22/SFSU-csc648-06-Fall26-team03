@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .config import settings
+from .config import ensure_production_secret, settings
 from .database import Base, engine
 from .migrations import run_additive_migrations
 from .routers import (
@@ -22,6 +22,8 @@ from .routers import (
     public,
     skills,
 )
+
+ensure_production_secret(settings)
 
 logging.basicConfig(level=logging.INFO)
 for noisy in ("httpx", "httpx2"):
