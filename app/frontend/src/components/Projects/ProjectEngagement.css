@@ -1,0 +1,155 @@
+.project-engagement {
+    margin-top: 12px;
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+    padding-top: 10px;
+}
+
+.engagement-likes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.like-button {
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 16px;
+    padding: 4px 14px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.like-button.liked {
+    color: #d6336c;
+    border-color: #d6336c;
+}
+
+.like-button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.engagement-hint {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.comment-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+}
+
+.comment-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.comment-head {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 0.85rem;
+}
+
+.comment-head time {
+    opacity: 0.6;
+    font-size: 0.78rem;
+}
+
+.comment-delete {
+    margin-left: auto;
+    border: none;
+    background: none;
+    color: #b00020;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.comment-body {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
+.comment-form {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-top: 8px;
+}
+
+.comment-form textarea {
+    flex: 1;
+    resize: vertical;
+    padding: 6px 8px;
+}
+
+/* Model revisions (shared styles live here too) */
+
+.model-revisions {
+    margin-top: 10px;
+}
+
+.revision-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.revision-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.revision-item.selected {
+    border-color: #3366cc;
+    outline: 1px solid #3366cc;
+}
+
+.revision-label {
+    font-weight: 700;
+}
+
+.revision-label em {
+    font-weight: 400;
+    font-style: normal;
+    color: #3366cc;
+}
+
+.revision-meta {
+    font-size: 0.78rem;
+    opacity: 0.65;
+}
+
+.revision-note {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.revision-upload {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    margin-top: 8px;
+}
+
+.revision-upload label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+}

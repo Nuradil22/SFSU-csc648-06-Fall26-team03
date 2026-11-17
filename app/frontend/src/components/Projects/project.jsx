@@ -2,11 +2,15 @@ import { useState } from "react";
 import './project.css';
 import ProjectDescription from "./projectDescription";
 import ModelViewer from "../ModelViewer/ModelViewer";
+import ModelRevisions from "./ModelRevisions";
+import ProjectEngagement from "./ProjectEngagement";
 
-function Project({name, date, type, description, images = [], links = [], model, owner, darkMode, children}) {
+function Project({name, date, type, description, images = [], links = [], model, owner, darkMode, children, projectId, canEdit = false}) {
 
     // this will be used to track if each project box is collapsed or expanded
     const [expanded, setExpanded] = useState(false);
+    // The revision the viewer is currently showing (defaults to the current model)
+    const [selectedModelUrl, setSelectedModelUrl] = useState(null);
 
     return (
 
@@ -49,7 +53,14 @@ function Project({name, date, type, description, images = [], links = [], model,
                     {model && (
                     <section className="project-model">
                         <h3>3D Model</h3>
-                        <ModelViewer modelUrl={model} />
+                        <ModelViewer modelUrl={selectedModelUrl || model} />
+                        {projectId && (
+                            <ModelRevisions
+                                projectId={projectId}
+                                canEdit={canEdit}
+                                onSelectRevision={setSelectedModelUrl}
+                            />
+                        )}
                     </section>
                     )}
 
@@ -64,6 +75,10 @@ function Project({name, date, type, description, images = [], links = [], model,
                     )}
 
                     {children && <div className="project-actions">{children}</div>}
+
+                    {/* Likes and comments (M4): visible to anyone who can see
+                        the project; interactions require login */}
+                    {projectId && <ProjectEngagement projectId={projectId} />}
 
                 </div>
             )}

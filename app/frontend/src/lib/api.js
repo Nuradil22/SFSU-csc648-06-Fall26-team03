@@ -242,6 +242,57 @@ export function decideRoadmapProposal(proposalId, decision) {
     return request(`/career/proposals/${proposalId}/${decision}`, { method: 'POST', auth: true });
 }
 
+// --- M4 collaboration: likes, comments, 3D model revisions ---
+
+// {like_count, comment_count, liked_by_me} for a viewable project.
+// Sends the token when logged in so liked_by_me/can_delete are correct.
+export function getEngagement(projectId) {
+    return request(`/projects/${projectId}/engagement`, { auth: true });
+}
+
+export function likeProject(projectId) {
+    return request(`/projects/${projectId}/like`, { method: 'PUT', auth: true });
+}
+
+export function unlikeProject(projectId) {
+    return request(`/projects/${projectId}/like`, { method: 'DELETE', auth: true });
+}
+
+// [{id, author_name, body, created_at, can_delete}], oldest first.
+export function getComments(projectId) {
+    return request(`/projects/${projectId}/comments`, { auth: true });
+}
+
+export function addComment(projectId, body) {
+    return request(`/projects/${projectId}/comments`, {
+        method: 'POST', body: { body }, auth: true,
+    });
+}
+
+export function deleteComment(projectId, commentId) {
+    return request(`/projects/${projectId}/comments/${commentId}`, {
+        method: 'DELETE', auth: true,
+    });
+}
+
+// [{id, version_label, change_note, url, file_format, original_filename,
+//   file_size_bytes, created_at, is_current}], newest first.
+export function getModelRevisions(projectId) {
+    return request(`/projects/${projectId}/model/revisions`, { auth: true });
+}
+
+// Upload a new revision; the old file is kept and listed in the history.
+// changeNote is the student-written description of what changed.
+export function uploadModelRevision(projectId, file, changeNote, versionLabel) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (changeNote) formData.append('change_note', changeNote);
+    if (versionLabel) formData.append('version_label', versionLabel);
+    return request(`/projects/${projectId}/model`, {
+        method: 'PUT', formData, auth: true,
+    });
+}
+
 // Two-model comparison: asks the configured pair of models the same question
 // with the same portfolio and curated SFSU course records. Returns
 // {question, models: [{label, provider, model, status, error,

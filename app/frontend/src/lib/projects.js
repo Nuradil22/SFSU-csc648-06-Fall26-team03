@@ -7,6 +7,7 @@ export function toProjectProps(project) {
             : [];
 
     return {
+        projectId: project.id,
         name: project.title,
         date: project.project_date,
         type: project.subject,
