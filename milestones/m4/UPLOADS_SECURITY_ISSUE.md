@@ -52,26 +52,54 @@ links, and CDN/proxy logs).
   previously copied URL remains valid until then; nothing logs or revokes
   access.
 
-## Suggested fix (smallest backward-compatible change)
+## Suggested fix — complete, backward-compatible design
 
-Phase 1 — gate the local backend:
+**Constraint:** every stored file URL (`…/uploads/<folder>/<uuid>.<ext>` for
+local, `…/object/public/<bucket>/<path>` for Supabase) must keep working for
+authorized viewers; nothing already in the DB changes.
 
-- Replace the `StaticFiles` mount with an authenticated route
-  `GET /uploads/{path:path}` that looks up `storage_path` in
-  `ProjectModel`/`ProjectModelRevision`/project image tables, resolves the
-  owning project, and serves the file only when the project is public or the
-  caller owns it (`FileResponse`, correct `Content-Type` from stored format).
-- URL format stays identical — all stored URLs keep working; older revisions
-  remain reachable under the same rules as the project.
+### Phase 1 — gate local `/uploads` (single focused change)
 
-Phase 2 — production (Supabase) follow-up:
+1. Remove `app.mount("/uploads", StaticFiles(...))` in `main.py`.
+2. Add `GET /uploads/{path:path}` in a small router:
+   - Look up `path` in `ProjectModel.storage_path`,
+     `ProjectModelRevision.storage_path`, and the project-image table
+     (whichever matches; 404 otherwise — also prevents enumeration).
+   - Resolve the owning project; serve via `FileResponse` when the project's
+     portfolio is public **or** the caller owns it
+     (`get_optional_portfolio` — anonymous viewers of public projects keep
+     working; logged-in non-owners get 404, matching `_get_viewable_project`
+     semantics).
+   - `Content-Type` from the stored `file_format`/image content-type;
+     `Cache-Control: private` only for owner-only files.
+3. No schema changes — `storage_path` exists on every file record.
 
-- Make the bucket private and issue short-lived **signed URLs** on read
-  (project GET endpoints and revision listings), or proxy through the same
-  gated route. This is a separate, larger change — track as its own issue.
+Result: identical URLs, access now inherits project visibility for both
+current models and every retained revision.
 
-No schema changes required for Phase 1; `storage_path` already exists on every
-file record.
+### Phase 2 — production storage (Supabase)
+
+The bucket is created `{"public": True}` today, so the same exposure exists
+in production. Options, smallest first:
+
+- **2a. Proxy through the Phase-1 route** — the gated endpoint fetches the
+  object server-side and streams it. Zero Supabase changes; adds latency and
+  server bandwidth.
+- **2b. Private bucket + signed URLs (recommended)** — flip the bucket to
+  private, keep `storage_path` in the DB, and have `store_file`/read
+  endpoints return short-lived `create_signed_url` results instead of public
+  URLs. `ModelOut.url`/`ModelRevisionOut.url`/`ImageOut.url` serialization
+  points become "URL minted on read." Older revisions keep working because
+  paths are unchanged.
+
+Phase 2b is the complete fix for production; Phase 1 alone fully fixes local
+dev and is safe to ship independently.
+
+### Implementation cost estimate
+
+Phase 1: ~60 lines (route + lookup helper) + tests for owner/public/stranger/
+anonymous matrix. Phase 2b: storage-backend change in `SupabaseStorage` +
+response URL minting, no schema migration.
 
 ## M4 rubric note
 
