@@ -95,8 +95,9 @@ def compare_pair() -> list[tuple[str, str]]:
         pair = []
         for entry in spec.split(","):
             provider, _, model = entry.strip().partition(":")
+            provider, model = provider.strip().lower(), model.strip()
             if provider and model:
-                pair.append((provider.lower(), model))
+                pair.append((provider, model))
         if len(pair) == 2:
             return pair
         logger.warning("MODEL_COMPARE_PAIR must list two 'provider:model' entries.")

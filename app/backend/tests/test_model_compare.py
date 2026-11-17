@@ -1,10 +1,18 @@
 """Two-model comparison (/career/compare): catalog validation, agreement
 diff, provider failure surfacing, and no fabricated output. No live calls —
-provider functions are stubbed."""
+provider functions are stubbed or SDK clients are faked."""
 
+import json
+from types import SimpleNamespace
+
+import anthropic
+import httpx
+import openai
+import pytest
 from fastapi import HTTPException
 
 from app import academic_catalog
+from app.config import settings
 from app.routers import model_compare
 from app.routers.model_compare import (
     CompareResponse,
@@ -168,3 +176,200 @@ def test_compare_pair_uses_anthropic_when_key_set(monkeypatch):
     monkeypatch.setattr("app.routers.model_compare.settings.model_compare_pair", "")
     assert compare_pair() == [("openai", model_compare.settings.openai_model),
                               ("anthropic", model_compare.settings.ai_model)]
+
+
+# --- Provider pair configuration --------------------------------------------
+
+def test_compare_pair_parses_explicit_spec(monkeypatch):
+    monkeypatch.setattr(settings, "model_compare_pair",
+                        " OpenAI : gpt-5.1 , Anthropic : claude-sonnet-4 ")
+    assert compare_pair() == [("openai", "gpt-5.1"), ("anthropic", "claude-sonnet-4")]
+
+
+def test_compare_pair_rejects_malformed_spec_and_falls_back(monkeypatch, caplog):
+    monkeypatch.setattr(settings, "model_compare_pair", "only-one-entry")
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    with caplog.at_level("WARNING"):
+        pair = compare_pair()
+    assert pair == [("openai", settings.openai_model),
+                    ("openai", settings.compare_fallback_model)]
+    assert "provider:model" in caplog.text
+
+
+def test_supports_reasoning_flag():
+    assert model_compare._supports_reasoning("gpt-5.1")
+    assert model_compare._supports_reasoning("o3-mini")
+    assert not model_compare._supports_reasoning("gpt-4o-mini")
+    assert not model_compare._supports_reasoning("claude-sonnet-4")
+
+
+# --- OpenAI provider call ----------------------------------------------------
+
+class _FakeOpenAIClient:
+    """Stands in for openai.OpenAI; responses.create returns scripted text or raises."""
+    calls: list = []
+    outcome: object = None
+
+    def __init__(self, **kwargs):
+        self.responses = self
+
+    def create(self, **kwargs):
+        _FakeOpenAIClient.calls.append(kwargs)
+        if isinstance(_FakeOpenAIClient.outcome, Exception):
+            raise _FakeOpenAIClient.outcome
+        return SimpleNamespace(output_text=_FakeOpenAIClient.outcome)
+
+
+@pytest.fixture
+def fake_openai_sdk(monkeypatch):
+    _FakeOpenAIClient.calls = []
+    monkeypatch.setattr(openai, "OpenAI", _FakeOpenAIClient)
+    monkeypatch.setattr(settings, "openai_api_key", "test-key")
+    return _FakeOpenAIClient
+
+
+def _openai_status_error(cls, code=503):
+    req = httpx.Request("POST", "https://api.openai.test/v1/responses")
+    return cls("boom", response=httpx.Response(code, request=req), body=None)
+
+
+def _compare_json(*codes):
+    return json.dumps({"recommendations": [
+        {"course_code": c, "title": "T", "rationale": "r"} for c in codes
+    ]})
+
+
+def test_call_openai_parses_output_and_sends_reasoning_only_for_gpt5(fake_openai_sdk):
+    _FakeOpenAIClient.outcome = _compare_json("CSC 675")
+    result = model_compare._call_openai("q?", "system", "gpt-5.1")
+    assert isinstance(result, CompareResponse)
+    assert result.recommendations[0].course_code == "CSC 675"
+    assert _FakeOpenAIClient.calls[0]["max_output_tokens"] == 3000
+    assert _FakeOpenAIClient.calls[0]["reasoning"] == {"effort": settings.openai_reasoning_effort}
+
+    _FakeOpenAIClient.calls = []
+    model_compare._call_openai("q?", "system", "gpt-4o-mini")
+    assert "reasoning" not in _FakeOpenAIClient.calls[0]
+
+
+def test_call_openai_requires_api_key(monkeypatch):
+    monkeypatch.setattr(settings, "openai_api_key", "")
+    with pytest.raises(HTTPException) as exc:
+        model_compare._call_openai("q?", "system", "gpt-5.1")
+    assert exc.value.status_code == 503
+
+
+@pytest.mark.parametrize("exc", [
+    _openai_status_error(openai.AuthenticationError, 401),
+    _openai_status_error(openai.RateLimitError, 429),
+    _openai_status_error(openai.APIStatusError, 500),
+    openai.APIError("down", request=httpx.Request("POST", "https://api.openai.test"), body=None),
+])
+def test_call_openai_maps_sdk_errors_to_503(fake_openai_sdk, exc):
+    _FakeOpenAIClient.outcome = exc
+    with pytest.raises(HTTPException) as raised:
+        model_compare._call_openai("q?", "system", "gpt-5.1")
+    assert raised.value.status_code == 503
+
+
+def test_call_openai_unparseable_output_is_502(fake_openai_sdk):
+    _FakeOpenAIClient.outcome = "not json at all"
+    with pytest.raises(HTTPException) as exc:
+        model_compare._call_openai("q?", "system", "gpt-5.1")
+    assert exc.value.status_code == 502
+
+
+# --- Anthropic provider call -------------------------------------------------
+
+class _FakeAnthropicClient:
+    calls: list = []
+    outcome: object = ""
+
+    def __init__(self, **kwargs):
+        self.messages = self
+
+    def create(self, **kwargs):
+        _FakeAnthropicClient.calls.append(kwargs)
+        if isinstance(_FakeAnthropicClient.outcome, Exception):
+            raise _FakeAnthropicClient.outcome
+        return SimpleNamespace(
+            content=[SimpleNamespace(type="text", text=_FakeAnthropicClient.outcome)]
+        )
+
+
+@pytest.fixture
+def fake_anthropic_sdk(monkeypatch):
+    _FakeAnthropicClient.calls = []
+    monkeypatch.setattr(anthropic, "Anthropic", _FakeAnthropicClient)
+    monkeypatch.setattr(settings, "anthropic_api_key", "test-key")
+    return _FakeAnthropicClient
+
+
+def _anthropic_status_error(cls, code=503):
+    req = httpx.Request("POST", "https://api.anthropic.test/v1/messages")
+    return cls("boom", response=httpx.Response(code, request=req), body=None)
+
+
+def test_call_anthropic_parses_json_text(fake_anthropic_sdk):
+    _FakeAnthropicClient.outcome = _compare_json("CSC 317")
+    result = model_compare._call_anthropic("q?", "system", "claude-sonnet-4")
+    assert result.recommendations[0].course_code == "CSC 317"
+    assert _FakeAnthropicClient.calls[0]["max_tokens"] == 2000
+
+
+def test_call_anthropic_extracts_json_wrapped_in_prose(fake_anthropic_sdk):
+    _FakeAnthropicClient.outcome = (
+        'Here are my picks:\n```json\n' + _compare_json("CSC 648") + '\n```'
+    )
+    result = model_compare._call_anthropic("q?", "system", "claude-sonnet-4")
+    assert result.recommendations[0].course_code == "CSC 648"
+
+
+def test_call_anthropic_unparseable_output_is_502(fake_anthropic_sdk):
+    _FakeAnthropicClient.outcome = "no JSON here"
+    with pytest.raises(HTTPException) as exc:
+        model_compare._call_anthropic("q?", "system", "claude-sonnet-4")
+    assert exc.value.status_code == 502
+
+
+@pytest.mark.parametrize("exc", [
+    _anthropic_status_error(anthropic.AuthenticationError, 401),
+    _anthropic_status_error(anthropic.APIStatusError, 500),
+    anthropic.APIConnectionError(request=httpx.Request("POST", "https://api.anthropic.test")),
+])
+def test_call_anthropic_maps_sdk_errors_to_503(fake_anthropic_sdk, exc):
+    _FakeAnthropicClient.outcome = exc
+    with pytest.raises(HTTPException) as raised:
+        model_compare._call_anthropic("q?", "system", "claude-sonnet-4")
+    assert raised.value.status_code == 503
+
+
+def test_call_anthropic_requires_api_key(monkeypatch):
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    with pytest.raises(HTTPException) as exc:
+        model_compare._call_anthropic("q?", "system", "claude-sonnet-4")
+    assert exc.value.status_code == 503
+
+
+# --- Dispatch and validation -------------------------------------------------
+
+def test_call_provider_rejects_unknown_provider():
+    with pytest.raises(HTTPException) as exc:
+        model_compare._call_provider("gemini", "q?", "system", "gemini-pro")
+    assert exc.value.status_code == 503
+    assert "gemini" in exc.value.detail
+
+
+def test_validated_non_course_item_is_not_applicable():
+    rec = ModelRecommendation(course_code=None, title="SFSU Hackathon", rationale="fun")
+    item = model_compare._validated(rec)
+    assert item["validation"]["status"] == "not_applicable"
+    assert "nothing to verify" in item["validation"]["issue"]
+
+
+def test_validated_course_runs_catalog_check():
+    rec = ModelRecommendation(
+        course_code="CSC 999", title="Invented", rationale="r",
+        prerequisites_claimed=["CSC 000"])
+    item = model_compare._validated(rec)
+    assert item["validation"]["status"] == "unverified"
