@@ -232,3 +232,42 @@
 .account-status {
     padding: 0 1rem;
 }
+
+@media (max-width: 760px) {
+    .account-form-header {
+        flex-direction: column;
+        gap: 1rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .account-header-fields,
+    .pfp-holder,
+    .header-btns {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .header-btn {
+        width: 100%;
+    }
+
+    .profile-pic {
+        transform: none;
+    }
+
+    .form-body {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .user-details {
+        width: 100%;
+        min-height: auto;
+        padding-right: 0;
+        border-right: none;
+    }
+
+    .user-work {
+        display: none;
+    }
+}

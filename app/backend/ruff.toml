@@ -1,0 +1,13 @@
+# Minimal Ruff configuration for the backend (added for M4 coding-practices).
+# Deliberately conservative: correctness + import order + obvious style only.
+target-version = "py313"
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I"]
+# E501 (line length) is not enforced — existing code uses longer lines.
+ignore = ["E501"]
+
+[lint.per-file-ignores]
+"tests/*" = ["E402"]   # conftest sets env before imports
+"scripts/*" = ["E402"]

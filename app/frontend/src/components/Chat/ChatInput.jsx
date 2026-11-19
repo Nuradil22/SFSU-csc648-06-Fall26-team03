@@ -3,7 +3,7 @@ import { useState } from "react";
 // Matches the backend ChatRequest limit (max_length=3000).
 const MAX_LENGTH = 3000;
 
-export default function ChatInput({ onSend, disabled }) {
+export default function ChatInput({ onSend, onCompare, disabled }) {
     const [content, setContent] = useState("");
 
     function handleSubmit(event) {
@@ -12,6 +12,13 @@ export default function ChatInput({ onSend, disabled }) {
         if (!content.trim() || disabled) return;
 
         onSend(content.trim());
+        setContent("");
+    }
+
+    function handleCompare() {
+        if (!content.trim() || disabled || !onCompare) return;
+
+        onCompare(content.trim());
         setContent("");
     }
 
@@ -34,14 +41,29 @@ export default function ChatInput({ onSend, disabled }) {
                 }}
             />
 
-            <button
-                type="submit"
-                disabled={disabled || !content.trim()}
-                aria-label="Send message"
-            >
-                <span>Send</span>
-                <span aria-hidden="true">➤</span>
-            </button>
+            <div className="chat-input-actions">
+                {onCompare && (
+                    <button
+                        type="button"
+                        className="chat-compare-button"
+                        disabled={disabled || !content.trim()}
+                        onClick={handleCompare}
+                        aria-label="Compare answers from two AI models"
+                        title="Ask two AI models and compare their recommendations"
+                    >
+                        Compare models
+                    </button>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={disabled || !content.trim()}
+                    aria-label="Send message"
+                >
+                    <span>Send</span>
+                    <span aria-hidden="true">➤</span>
+                </button>
+            </div>
         </form>
     );
 }

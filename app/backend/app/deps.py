@@ -11,6 +11,7 @@ from . import models, security
 from .database import Base, get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_optional = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 
 ModelT = TypeVar("ModelT", bound=Base)
 
@@ -48,6 +49,28 @@ def ensure_portfolio(db: Session, user: models.User) -> models.Portfolio:
 def get_current_portfolio(
     user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> models.Portfolio:
+    return ensure_portfolio(db, user)
+
+
+def get_optional_portfolio(
+    token: str | None = Depends(oauth2_optional), db: Session = Depends(get_db)
+) -> models.Portfolio | None:
+    """The caller's portfolio if a valid Bearer token was sent, else None.
+
+    Used by public read endpoints (likes/comments) that must also tell a
+    logged-in viewer which interactions are theirs."""
+    if not token:
+        return None
+    try:
+        payload = security.decode_access_token(token)
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+    except PyJWTError:
+        return None
+    user = db.get(models.User, int(user_id))
+    if user is None:
+        return None
     return ensure_portfolio(db, user)
 
 

@@ -20,6 +20,7 @@ function Explore({ darkMode }) {
     const [projects, setProjects] = useState([]);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -48,12 +49,16 @@ function Explore({ darkMode }) {
     }
 
     async function loadMore() {
+        if (loadingMore) return;
+        setLoadingMore(true);
         try {
             const more = await searchProjects({ search, category, limit: PAGE_SIZE, offset: projects.length });
             setProjects((current) => [...current, ...more]);
             setHasMore(more.length === PAGE_SIZE);
         } catch (err) {
             setError(err.message);
+        } finally {
+            setLoadingMore(false);
         }
     }
 
@@ -97,7 +102,11 @@ function Explore({ darkMode }) {
                     ))}
                 </div>
 
-                {hasMore && <button type="button" onClick={loadMore}>Load more</button>}
+                {hasMore && (
+                    <button type="button" onClick={loadMore} disabled={loadingMore}>
+                        {loadingMore ? "Loading…" : "Load more"}
+                    </button>
+                )}
             </div>
         </main>
     );

@@ -108,6 +108,47 @@ def has_enough_data(payload: dict) -> bool:
     return any(payload[key] for key in ("education", "skills", "experience", "certificates", "projects"))
 
 
+# Minimum portfolio for the career assistant (/career/*). Every required item can
+# be saved from the existing dashboard: education, skills, and job preferences on
+# Account Setup, projects on the project editor. The keys are stable so the
+# frontend can link each one to the existing page where it is added.
+MIN_SKILLS_FOR_ADVISOR = 3
+
+
+def portfolio_readiness(payload: dict) -> dict:
+    """Whether the saved portfolio is complete enough for personalized advice.
+
+    Returns {"ready", "missing", "optional_missing"}; each item is {"key", "label"}.
+    `missing` blocks the assistant; `optional_missing` is passed to the AI so it
+    knows what it doesn't have (and never asks for what is already saved).
+    """
+    education = [
+        e for e in payload["education"] if e.get("school") and (e.get("degree") or e.get("major"))
+    ]
+    goals = list(payload["career_interests"]) + [j["role"] for j in payload["job_preferences"] if j.get("role")]
+
+    required = [
+        ("education", "Your school and degree (Education & Degrees)", bool(education)),
+        ("skills", f"At least {MIN_SKILLS_FOR_ADVISOR} skills", len(payload["skills"]) >= MIN_SKILLS_FOR_ADVISOR),
+        ("career_goal", "At least one job preference (the role you're aiming for)", bool(goals)),
+        ("projects", "At least one project", bool(payload["projects"] or payload["experience"])),
+    ]
+    optional = [
+        ("graduation_date", "Expected graduation year",
+         bool(education) and not any(e.get("graduation_date") for e in education)),
+        ("certificates", "Certificates", not payload["certificates"]),
+        ("experience", "Work, internship, research, or volunteer experience", not payload["experience"]),
+        ("coursework", "Completed coursework", not any(e.get("coursework") for e in payload["education"])),
+    ]
+
+    missing = [{"key": key, "label": label} for key, label, ok in required if not ok]
+    return {
+        "ready": not missing,
+        "missing": missing,
+        "optional_missing": [{"key": key, "label": label} for key, label, absent in optional if absent],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Claude provider
 # ---------------------------------------------------------------------------

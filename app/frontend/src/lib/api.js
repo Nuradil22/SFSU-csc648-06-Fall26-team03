@@ -192,12 +192,33 @@ export function removeProjectModel(projectId) {
 
 // --- Career chatbot (OpenAI via the authenticated FastAPI /career/* routes) ---
 
-// Returns {reply, provider, proposal_id, proposal}.
+// Returns {reply, provider, proposal_id, proposal, resources, web_search}.
+// resources: [{title, url, provider?, description?, type?}], verified links only.
 export function sendCareerMessage(message) {
     return request('/career/chat', { method: 'POST', body: { message }, auth: true });
 }
 
-// The student's approved roadmap ({id, title, goals}) or null.
+// Called when the Roadmap page opens. Generates a first roadmap draft only if
+// the student has nothing appropriate yet. Returns {status, generated, ...}:
+// "generated" (+ message_id, reply, resources, proposal_id, proposal),
+// "pending" (+ proposal_id, proposal), "approved" (+ portfolio_changed), or
+// "up_to_date".
+export function generateAutoRoadmap() {
+    return request('/career/roadmap/auto', { method: 'POST', auth: true });
+}
+
+// Whether the saved portfolio is complete enough for the assistant:
+// {ready, missing: [{key, label}], optional_missing: [{key, label}]}.
+export function getCareerReadiness() {
+    return request('/career/readiness', { auth: true });
+}
+
+// Saved conversation, oldest first: [{id, role, content, resources}].
+export function getCareerChatHistory() {
+    return request('/career/chat/history', { auth: true });
+}
+
+// The student's approved roadmap ({id, title, goals, portfolio_changed}) or null.
 export function getCareerRoadmap() {
     return request('/career/roadmap', { auth: true });
 }
@@ -211,7 +232,7 @@ export function updateCareerRoadmap(roadmap) {
     });
 }
 
-// Pending AI-generated proposals, newest first: [{id, title, goals}].
+// Pending AI-generated proposals, newest first: [{id, title, goals, origin}].
 export function getRoadmapProposals() {
     return request('/career/proposals', { auth: true });
 }
@@ -219,4 +240,65 @@ export function getRoadmapProposals() {
 // decision is 'approve' or 'reject'.
 export function decideRoadmapProposal(proposalId, decision) {
     return request(`/career/proposals/${proposalId}/${decision}`, { method: 'POST', auth: true });
+}
+
+// --- M4 collaboration: likes, comments, 3D model revisions ---
+
+// {like_count, comment_count, liked_by_me} for a viewable project.
+// Sends the token when logged in so liked_by_me/can_delete are correct.
+export function getEngagement(projectId) {
+    return request(`/projects/${projectId}/engagement`, { auth: true });
+}
+
+export function likeProject(projectId) {
+    return request(`/projects/${projectId}/like`, { method: 'PUT', auth: true });
+}
+
+export function unlikeProject(projectId) {
+    return request(`/projects/${projectId}/like`, { method: 'DELETE', auth: true });
+}
+
+// [{id, author_name, body, created_at, can_delete}], oldest first.
+export function getComments(projectId) {
+    return request(`/projects/${projectId}/comments`, { auth: true });
+}
+
+export function addComment(projectId, body) {
+    return request(`/projects/${projectId}/comments`, {
+        method: 'POST', body: { body }, auth: true,
+    });
+}
+
+export function deleteComment(projectId, commentId) {
+    return request(`/projects/${projectId}/comments/${commentId}`, {
+        method: 'DELETE', auth: true,
+    });
+}
+
+// [{id, version_label, change_note, url, file_format, original_filename,
+//   file_size_bytes, created_at, is_current}], newest first.
+export function getModelRevisions(projectId) {
+    return request(`/projects/${projectId}/model/revisions`, { auth: true });
+}
+
+// Upload a new revision; the old file is kept and listed in the history.
+// changeNote is the student-written description of what changed.
+export function uploadModelRevision(projectId, file, changeNote, versionLabel) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (changeNote) formData.append('change_note', changeNote);
+    if (versionLabel) formData.append('version_label', versionLabel);
+    return request(`/projects/${projectId}/model`, {
+        method: 'PUT', formData, auth: true,
+    });
+}
+
+// Two-model comparison: asks the configured pair of models the same question
+// with the same portfolio and curated SFSU course records. Returns
+// {question, models: [{label, provider, model, status, error,
+// recommendations: [{course_code, title, category, rationale,
+// prerequisites_claimed, validation}]}], comparison, disclaimer}. A failed
+// provider is reported in that model's status, never fabricated.
+export function compareCareerModels(question) {
+    return request('/career/compare', { method: 'POST', body: { question }, auth: true });
 }

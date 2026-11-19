@@ -8,10 +8,6 @@
     align-items: center;
 }
 
-.app.dark {
-    color: #44a8d6;
-}
-
 .project-form h2 {
     margin-bottom: 1.5rem;
 }
@@ -207,8 +203,31 @@
 }
 
 @media (max-width: 600px) {
+    .project-form {
+        width: 96%;
+        padding: 1rem;
+    }
+
+    .header-fields {
+        flex-direction: column;
+        margin: 1rem 0;
+        width: 100%;
+    }
+
+    .header-field {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    .project-model-editor,
+    .description-editor {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
     .project-form-actions {
         justify-content: stretch;
+        width: 100%;
     }
 
     .project-submit-button {

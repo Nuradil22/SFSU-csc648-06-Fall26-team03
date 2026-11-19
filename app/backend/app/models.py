@@ -6,7 +6,7 @@ one User. Deleting a user cascades down to everything they own.
 
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -229,6 +229,17 @@ class Project(TimestampMixin, Base):
     model_3d: Mapped["ProjectModel | None"] = relationship(
         back_populates="project", uselist=False, cascade="all, delete-orphan", passive_deletes=True
     )
+    model_revisions: Mapped[list["ProjectModelRevision"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan", passive_deletes=True,
+        order_by="ProjectModelRevision.id",
+    )
+    likes: Mapped[list["ProjectLike"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan", passive_deletes=True
+    )
+    comments: Mapped[list["ProjectComment"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan", passive_deletes=True,
+        order_by="ProjectComment.id",
+    )
 
 
 class ProjectMedia(Base):
@@ -274,6 +285,74 @@ class ProjectModel(Base):
     project: Mapped[Project] = relationship(back_populates="model_3d")
 
 
+class ProjectModelRevision(Base):
+    """One uploaded 3D-model version of a project (M4 design iterations).
+
+    Every uploaded file becomes a revision row, including the current one:
+    the project's ProjectModel row always points at the newest revision's
+    file, and revision rows keep the older files' metadata. Version files are
+    kept in storage so earlier revisions stay viewable.
+    """
+
+    __tablename__ = "project_model_revisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    version_label: Mapped[str] = mapped_column(String(40), nullable=False)
+    change_note: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    file_format: Mapped[str] = mapped_column(String(10), nullable=False)
+    original_filename: Mapped[str | None] = mapped_column(String(255))
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer)
+    storage_path: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    project: Mapped[Project] = relationship(back_populates="model_revisions")
+
+
+class ProjectLike(Base):
+    """One student's like on a project (M4 social engagement). One per student
+    per project."""
+
+    __tablename__ = "project_likes"
+    __table_args__ = (
+        UniqueConstraint("project_id", "portfolio_id", name="uq_project_like"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    project: Mapped[Project] = relationship(back_populates="likes")
+    portfolio: Mapped[Portfolio] = relationship()
+
+
+class ProjectComment(Base):
+    """A comment on a project (M4 social engagement)."""
+
+    __tablename__ = "project_comments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    project: Mapped[Project] = relationship(back_populates="comments")
+    portfolio: Mapped[Portfolio] = relationship()
+
+
 class CareerGuidance(Base):
     """One saved AI career analysis (R10–R14). Refreshing creates a new row, so
     the history of analyses is kept and the newest one is "current"."""
@@ -307,6 +386,8 @@ class CareerChatMessage(Base):
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    # Verified learning resources shown with an assistant reply (P1).
+    resources: Mapped[list[dict] | None] = mapped_column(JSONType, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
@@ -334,6 +415,9 @@ class CareerRoadmap(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+    # Fingerprint of the portfolio the approved proposal was generated from;
+    # NULL for roadmaps approved before P1 or written by the owner (unknown).
+    portfolio_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class RoadmapProposal(Base):
@@ -351,13 +435,46 @@ class RoadmapProposal(Base):
         default=list,
         nullable=False
     )
+    # pending | approved | rejected | superseded (a newer draft replaced it)
     status: Mapped[str] = mapped_column(
         String(20),
         default="pending",
         nullable=False
     )
+    # "auto" (generated when the Roadmap page opened) or "chat"; NULL before P1.
+    origin: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    portfolio_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+
+
+class AIUsageEvent(Base):
+    """One billed AI call: used for per-student rate limits and cost review.
+
+    Stores counts only, never prompts, messages, or portfolio content.
+    """
+
+    __tablename__ = "ai_usage_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)  # chat | roadmap
+    provider: Mapped[str] = mapped_column(String(20), nullable=False)
+    web_searches: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # completed | incomplete (cut off) | invalid (unusable output) | failed
+    # (no response, e.g. API error); NULL for rows written before it existed.
+    status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        index=True
     )
 

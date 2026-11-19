@@ -130,7 +130,7 @@
     border-color: #44a8d6;
 }
 
-.app.dark input{
+.app.dark .project-gallery-editor input{
     background-color: lightgray;
 }
 

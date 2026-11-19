@@ -112,7 +112,7 @@ function Portfolio ({ darkMode }){
                 {/* List all a Users projects in a portfolio */}
                 <div className="project-box">
                     {projects.map(project => (
-                    <Project key={project.id} {...toProjectProps(project)} darkMode={darkMode}>
+                    <Project key={project.id} {...toProjectProps(project)} darkMode={darkMode} canEdit>
                         <button className="portfolio-button" type="button" onClick={() => navigate(`/projects/${project.id}/edit`)}>Edit</button>
                         <button className="portfolio-button" type="button" onClick={() => handleDelete(project)}>Delete</button>
                         <p>Visibility follows your portfolio setting.</p>

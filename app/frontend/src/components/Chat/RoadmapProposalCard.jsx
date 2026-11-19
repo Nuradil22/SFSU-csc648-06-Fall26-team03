@@ -1,5 +1,12 @@
 import RoadmapTimeline from "../Roadmap/RoadmapTimeline";
 
+const STATUS_LABELS = {
+  approved: "Approved",
+  rejected: "Rejected",
+  // A newer draft replaced this one; only the newest can be approved.
+  superseded: "Replaced by a newer draft"
+};
+
 // An AI-generated roadmap proposal awaiting the student's decision.
 // Nothing becomes the official roadmap until "Approve" succeeds on the backend.
 export default function RoadmapProposalCard({ message, onDecide }) {
@@ -11,7 +18,7 @@ export default function RoadmapProposalCard({ message, onDecide }) {
         Proposed roadmap
         {status !== "pending" && (
           <span className={`chat-proposal-status is-${status}`}>
-            {status === "approved" ? "Approved" : "Rejected"}
+            {STATUS_LABELS[status] || status}
           </span>
         )}
       </div>

@@ -1,9 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEV_SECRET_KEY = "dev-secret-change-me"
+
 
 class Settings(BaseSettings):
+    # Deployment environment. "production" requires a real SECRET_KEY (see
+    # ensure_production_secret); anything else keeps the dev default working.
+    environment: str = "development"
     database_url: str = "sqlite:///./careergps.db"
-    secret_key: str = "dev-secret-change-me"
+    secret_key: str = DEV_SECRET_KEY
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
     allowed_origins: str = "http://localhost:5173"
@@ -41,6 +46,44 @@ class Settings(BaseSettings):
     # OpenAI configuration
     openai_api_key: str = ""
     openai_model: str = "gpt-5-mini"
+    # Live web research for roadmaps and the career chatbot (OpenAI web_search
+    # tool). Used for roadmap generation and for messages about courses,
+    # programs, certificates, or learning resources. Each search is billed by
+    # OpenAI, so it is off unless enabled.
+    openai_web_search: bool = False
+    # Optional comma-separated allowlist (subdomains included). Empty means the
+    # open web, with official SFSU and other reputable providers preferred.
+    openai_web_search_domains: str = ""
+    # Sites never accepted as resource sources (subdomains included): forums,
+    # video and Q&A sites, and unofficial catalog mirrors. Comma-separated.
+    openai_web_search_blocked_domains: str = "courseleaf.com,reddit.com,youtube.com,quora.com"
+    # Before a researched link is shown, the server checks that it opens over
+    # valid HTTPS (no page content is kept). Missing pages, TLS/connection
+    # errors, timeouts, and broken redirects are dropped.
+    resource_link_check: bool = True
+    resource_link_check_timeout: float = 5.0
+    # Upper bound on searches in one request (OpenAI max_tool_calls).
+    openai_max_web_searches: int = 3
+    # "low" | "medium" | "high": how much page text each search adds (cost).
+    openai_web_search_context: str = "low"
+    # Reasoning effort for the career assistant ("minimal" | "low" | "medium" |
+    # "high"). Reasoning tokens count toward the output limits below.
+    openai_reasoning_effort: str = "low"
+    # Output-token caps (reasoning included); longer answers are cut off by
+    # OpenAI and rejected with a clear error.
+    openai_max_output_tokens_chat: int = 3000
+    openai_max_output_tokens_roadmap: int = 10000
+
+    # Two-model comparison (/career/compare). Comma-separated "provider:model"
+    # pair, e.g. "openai:gpt-5.1,anthropic:claude-opus-5-5". Empty: compare the
+    # configured OpenAI model with Anthropic when its key is set, otherwise
+    # with compare_fallback_model on OpenAI.
+    model_compare_pair: str = ""
+    compare_fallback_model: str = "gpt-4o-mini"
+
+    # Per-student limits on billed AI calls (checked before calling the provider).
+    ai_roadmap_generations_per_day: int = 5
+    ai_chat_messages_per_hour: int = 30
 
     ai_timeout_seconds: float = 120.0
 
@@ -49,6 +92,20 @@ class Settings(BaseSettings):
     @property
     def allowed_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+
+def ensure_production_secret(config: Settings) -> None:
+    """Refuse to run in production with a missing or default SECRET_KEY.
+
+    JWTs signed with the shipped default are forgeable by anyone who has read
+    this repository, so production deployments must provide their own key.
+    """
+    if config.environment.lower() == "production" and config.secret_key.strip() in ("", DEV_SECRET_KEY):
+        raise RuntimeError(
+            "Refusing to start: SECRET_KEY is missing or set to the development "
+            "default while ENVIRONMENT=production. Set SECRET_KEY to a strong "
+            "random value."
+        )
 
 
 settings = Settings()
