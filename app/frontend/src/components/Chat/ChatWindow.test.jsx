@@ -10,12 +10,20 @@ const {
     mockSendMessage,
     mockDecideRoadmapProposal,
     mockGetRoadmapProposals,
+    mockGetCareerReadiness,
+    mockGetCareerChatHistory,
+    mockGenerateAutoRoadmap,
+    mockCompareCareerModels,
     mockGetToken,
     mockRandomUUID
 } = vi.hoisted(() => ({
     mockSendMessage: vi.fn(),
     mockDecideRoadmapProposal: vi.fn(),
     mockGetRoadmapProposals: vi.fn(),
+    mockGetCareerReadiness: vi.fn(),
+    mockGetCareerChatHistory: vi.fn(),
+    mockGenerateAutoRoadmap: vi.fn(),
+    mockCompareCareerModels: vi.fn(),
     mockGetToken: vi.fn(),
     mockRandomUUID: vi.fn()
 }));
@@ -25,7 +33,11 @@ vi.mock("../../services/chatService", () => ({
 }));
 
 vi.mock("../../lib/api", () => ({
+    compareCareerModels: mockCompareCareerModels,
     decideRoadmapProposal: mockDecideRoadmapProposal,
+    generateAutoRoadmap: mockGenerateAutoRoadmap,
+    getCareerChatHistory: mockGetCareerChatHistory,
+    getCareerReadiness: mockGetCareerReadiness,
     getRoadmapProposals: mockGetRoadmapProposals,
     getToken: mockGetToken
 }));
@@ -128,7 +140,25 @@ beforeEach(() => {
     );
 
     mockGetToken.mockReturnValue(null);
+
+    mockGetCareerReadiness.mockResolvedValue({
+        ready: true,
+        missing: [],
+        optional_missing: []
+    });
+
+    mockGetCareerChatHistory.mockResolvedValue([]);
+
     mockGetRoadmapProposals.mockResolvedValue([]);
+
+    mockGenerateAutoRoadmap.mockResolvedValue({
+        status: "approved",
+        portfolio_changed: false
+    });
+
+    mockCompareCareerModels.mockResolvedValue({
+        models: []
+    });
 
     mockSendMessage.mockResolvedValue({
         reply: "Here is some career advice."

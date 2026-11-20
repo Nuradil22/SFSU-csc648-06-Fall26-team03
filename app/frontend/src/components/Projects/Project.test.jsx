@@ -4,10 +4,10 @@ import userEvent from "@testing-library/user-event";
 import Project from "./Project";
 
 vi.mock("./projectDescription", () => ({
-    default: ({ blocks, darkmode }) => (
+    default: ({ blocks, darkMode }) => (
         <div data-testid="project-description">
             <span>{JSON.stringify(blocks)}</span>
-            <span>{String(darkmode)}</span>
+            <span>{String(darkMode)}</span>
         </div>
     )
 }));
@@ -16,6 +16,41 @@ vi.mock("../ModelViewer/ModelViewer", () => ({
     default: ({ modelUrl }) => (
         <div data-testid="model-viewer">
             {modelUrl}
+        </div>
+    )
+}));
+
+vi.mock("./ModelRevisions", () => ({
+    default: ({
+        projectId,
+        canEdit,
+        onSelectRevision
+    }) => (
+        <div data-testid="model-revisions">
+            <span data-testid="revision-project-id">
+                {projectId}
+            </span>
+
+            <span data-testid="revision-can-edit">
+                {String(canEdit)}
+            </span>
+
+            <button
+                type="button"
+                onClick={() =>
+                    onSelectRevision("models/revision.glb")
+                }
+            >
+                Select Revision
+            </button>
+        </div>
+    )
+}));
+
+vi.mock("./ProjectEngagement", () => ({
+    default: ({ projectId }) => (
+        <div data-testid="project-engagement">
+            Engagement for {projectId}
         </div>
     )
 }));
@@ -361,4 +396,133 @@ describe("Project", () => {
             })
         ).toBeInTheDocument();
     });
+    
+    it("passes dark mode to the project description", async () => {
+    const user = userEvent.setup();
+
+    renderProject({
+        darkMode: true
+    });
+
+    await user.click(
+        screen.getByRole("button", {
+            name: /Portfolio Website/
+        })
+    );
+
+    expect(
+        screen.getByTestId("project-description")
+    ).toHaveTextContent("true");
+});
+
+it("renders model revisions when a project ID is provided", async () => {
+    const user = userEvent.setup();
+
+    renderProject({
+        model: "models/current.glb",
+        projectId: "project-123",
+        canEdit: true
+    });
+
+    await user.click(
+        screen.getByRole("button", {
+            name: /Portfolio Website/
+        })
+    );
+
+    expect(
+        screen.getByTestId("model-revisions")
+    ).toBeInTheDocument();
+
+    expect(
+        screen.getByTestId("revision-project-id")
+    ).toHaveTextContent("project-123");
+
+    expect(
+        screen.getByTestId("revision-can-edit")
+    ).toHaveTextContent("true");
+});
+
+it("does not render model revisions without a project ID", async () => {
+    const user = userEvent.setup();
+
+    renderProject({
+        model: "models/current.glb"
+    });
+
+    await user.click(
+        screen.getByRole("button", {
+            name: /Portfolio Website/
+        })
+    );
+
+    expect(
+        screen.queryByTestId("model-revisions")
+    ).not.toBeInTheDocument();
+});
+
+it("changes the displayed model when a revision is selected", async () => {
+    const user = userEvent.setup();
+
+    renderProject({
+        model: "models/current.glb",
+        projectId: "project-123"
+    });
+
+    await user.click(
+        screen.getByRole("button", {
+            name: /Portfolio Website/
+        })
+    );
+
+    expect(
+        screen.getByTestId("model-viewer")
+    ).toHaveTextContent("models/current.glb");
+
+    await user.click(
+        screen.getByRole("button", {
+            name: "Select Revision"
+        })
+    );
+
+    expect(
+        screen.getByTestId("model-viewer")
+    ).toHaveTextContent("models/revision.glb");
+});
+
+it("renders project engagement when a project ID is provided", async () => {
+    const user = userEvent.setup();
+
+    renderProject({
+        projectId: "project-123"
+    });
+
+    await user.click(
+        screen.getByRole("button", {
+            name: /Portfolio Website/
+        })
+    );
+
+    expect(
+        screen.getByTestId("project-engagement")
+    ).toHaveTextContent(
+        "Engagement for project-123"
+    );
+});
+
+it("does not render project engagement without a project ID", async () => {
+    const user = userEvent.setup();
+
+    renderProject();
+
+    await user.click(
+        screen.getByRole("button", {
+            name: /Portfolio Website/
+        })
+    );
+
+    expect(
+        screen.queryByTestId("project-engagement")
+    ).not.toBeInTheDocument();
+});
 });
