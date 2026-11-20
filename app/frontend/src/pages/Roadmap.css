@@ -599,7 +599,18 @@
     }
 
     .chat-input-form {
+        flex-direction: column;
+        align-items: stretch;
         padding: 0.7rem;
+    }
+
+    .chat-input-form textarea {
+        width: 100%;
+    }
+
+    .chat-input-actions {
+        justify-content: flex-end;
+        flex-wrap: wrap;
     }
 
     .chat-input-form button {

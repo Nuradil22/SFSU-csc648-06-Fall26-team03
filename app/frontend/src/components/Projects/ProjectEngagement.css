@@ -1,0 +1,158 @@
+.project-engagement {
+    margin-top: 12px;
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+    padding-top: 10px;
+}
+
+.engagement-likes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.like-button {
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 16px;
+    padding: 4px 14px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.like-button:not(:disabled):hover {
+    border-color: #d6336c;
+}
+
+.like-button.liked {
+    color: #d6336c;
+    border-color: #d6336c;
+}
+
+.like-button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.engagement-hint {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.comment-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+}
+
+.comment-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.comment-head {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 0.85rem;
+}
+
+.comment-head time {
+    opacity: 0.6;
+    font-size: 0.78rem;
+}
+
+.comment-delete {
+    margin-left: auto;
+    border: none;
+    background: none;
+    color: #b00020;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 6px;
+}
+
+.comment-delete:hover {
+    text-decoration: underline;
+}
+
+.comment-body {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
+.comment-form {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-top: 8px;
+}
+
+.comment-form textarea {
+    flex: 1;
+    min-width: 0;
+    resize: vertical;
+    padding: 8px;
+    border: 1px solid #999;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.comment-form button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background-color: #263b59;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.comment-form button:hover:not(:disabled) {
+    background-color: #344e73;
+}
+
+.comment-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.app.dark .comment-form button {
+    background-color: #3092c0;
+}
+
+.app.dark .comment-form button:hover:not(:disabled) {
+    background-color: #44a8d6;
+}
+
+.comment-body {
+    overflow-wrap: anywhere;
+}
+
+.like-button {
+    font: inherit;
+    color: inherit;
+}
+
+.like-button.liked {
+    color: #d6336c;
+}
+
+.comment-head {
+    flex-wrap: wrap;
+}
+
+.app.dark .comment-delete {
+    color: #ff8a80;
+}
+
+@media (max-width: 560px) {
+    .comment-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

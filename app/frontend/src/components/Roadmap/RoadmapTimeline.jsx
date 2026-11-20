@@ -1,7 +1,8 @@
 import { useState } from "react";
 import "./RoadmapTimeline.css";
+import ResourceList from "./ResourceList";
 
-// Renders a roadmap ({title, goals: [{id, title, milestones: [{id, title, completed}]}]})
+// Renders a roadmap ({title, goals: [{id, title, milestones: [{id, title, completed, resources?}]}]})
 // exactly as the backend returns it. No roadmap content is defined here.
 //
 // Goals are connected nodes on a vertical timeline; each goal's milestones
@@ -66,6 +67,7 @@ export default function RoadmapTimeline({ roadmap, onToggleMilestone, disabled =
                       ) : (
                         <span>{milestone.title}</span>
                       )}
+                      <ResourceList resources={milestone.resources} compact />
                     </li>
                   ))}
                 </ul>

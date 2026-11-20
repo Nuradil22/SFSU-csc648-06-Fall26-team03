@@ -1,0 +1,58 @@
+M4 integration run — 2026-11-17T03:51:03.633181+00:00 (TestClient, disposable DB: /var/folders/x_/0k44hs4x4hndh26dtws4d1sm0000gn/T/careergps-m4-it-jnrbody4)
+
+IT-01 Account authentication and authorization
+  PASS  signup valid student: 201 (expected 201)
+  PASS  signup duplicate email rejected: 409 (expected 409)
+  PASS  login correct credentials: 200 (expected 200) + field checks
+  PASS  login wrong password: 401 (expected 401)
+  PASS  protected route without token: 401 (expected 401)
+
+IT-02 Student profile and education history
+  PASS  add education: 201 (expected 201)
+  PASS  add skill: 201 (expected 201)
+  PASS  add experience: 201 (expected 201)
+  PASS  add certificate: 201 (expected 201)
+  PASS  portfolio shows saved sections: 200 (expected 200) + field checks
+  PASS  cannot edit another student's portfolio: 200 (expected 200)
+  PASS  owner bio unaffected: 200 (expected 200) + field checks
+
+IT-03 Portfolio and project management
+  PASS  create project: 201 (expected 201) + field checks
+  PASS  owner lists project: 200 (expected 200) + field checks
+  PASS  peer cannot see private project: 404 (expected 404)
+  PASS  enable sharing: 200 (expected 200) + field checks
+  PASS  peer views shared project by link: 200 (expected 200) + field checks
+  PASS  peer hits viewable engagement endpoint: 200 (expected 200)
+  PASS  public browse lists project: 200 (expected 200) + field checks
+  PASS  peer cannot edit owner's project: 404 (expected 404)
+
+IT-04 Focused AI academic guidance
+  PASS  readiness blocks incomplete portfolio: 200 (expected 200) + field checks
+  PASS  chat returns personalized reply: 200 (expected 200) + field checks
+  PASS  roadmap proposal offered: 200 (expected 200) + field checks
+  PASS  roadmap not active before approval: 200 (expected 200) + field checks
+  PASS  approve proposal: 200 (expected 200) + field checks
+  PASS  approved roadmap served: 200 (expected 200) + field checks
+
+IT-05 Recommendation results
+  PASS  guidance generated: 201 (expected 201) + field checks
+  PASS  latest guidance retrievable: 200 (expected 200)
+
+IT-06 Basic collaborative project feedback
+  PASS  peer likes shared project: 200 (expected 200) + field checks
+  PASS  second like is idempotent: 200 (expected 200) + field checks
+  PASS  peer comments: 201 (expected 201) + field checks
+  PASS  anonymous like rejected: 401 (expected 401)
+  PASS  owner sees engagement: 200 (expected 200) + field checks
+  PASS  owner deletes peer comment: 204 (expected 204)
+  PASS  unlike: 200 (expected 200) + field checks
+
+IT-07 Project/model revision history
+  PASS  upload v1 model: 200 (expected 200) + field checks
+  PASS  upload v2 with change note: 200 (expected 200)
+  PASS  revision history lists both versions: 200 (expected 200) + field checks
+  PASS  peer cannot upload a revision: 404 (expected 404)
+  PASS  invalid model rejected: 400 (expected 400)
+
+============================================================
+All integration steps passed.

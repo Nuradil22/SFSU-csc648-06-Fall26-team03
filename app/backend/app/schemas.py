@@ -381,6 +381,36 @@ class ModelOut(ORMModel):
     created_at: datetime
 
 
+class ModelRevisionOut(ORMModel):
+    id: int
+    version_label: str
+    change_note: str | None
+    url: str
+    file_format: str
+    original_filename: str | None
+    file_size_bytes: int | None
+    created_at: datetime
+    is_current: bool = False
+
+
+class CommentIn(BaseModel):
+    body: str = Field(min_length=1, max_length=2000)
+
+
+class CommentOut(ORMModel):
+    id: int
+    author_name: str
+    body: str
+    created_at: datetime
+    can_delete: bool = False
+
+
+class EngagementOut(BaseModel):
+    like_count: int
+    comment_count: int
+    liked_by_me: bool = False
+
+
 class ProjectOut(ORMModel):
     id: int
     title: str

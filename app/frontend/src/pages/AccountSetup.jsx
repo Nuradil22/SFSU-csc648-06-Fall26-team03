@@ -196,8 +196,12 @@ function AccountSetup({ darkMode }) {
             const share = await enableSharing();
             const url = `${window.location.origin}/p/${share.share_token}`;
             setShareUrl(url);
-            await navigator.clipboard?.writeText(url).catch(() => {});
-            setStatus("Share link copied to clipboard.");
+            try {
+                await navigator.clipboard.writeText(url);
+                setStatus("Share link copied to clipboard.");
+            } catch {
+                setStatus("Share link created — copy it below.");
+            }
         } catch (err) {
             setError(err.message);
         }
@@ -251,7 +255,7 @@ function AccountSetup({ darkMode }) {
                 className="box account-setup-form"
                 onSubmit={(event) => {
                     event.preventDefault();
-                    console.log("Account form submitted!");
+                    if (isEditing) saveProfile();
                 }}
             >
                 <div className="account-form-header">
@@ -305,7 +309,7 @@ function AccountSetup({ darkMode }) {
                     <div className="header-btns">
                         {isEditing ? (
                             <>
-                                <button type="button" className="header-btn" onClick={saveProfile}>
+                                <button type="submit" className="header-btn">
                                     Save Profile
                                 </button>
 

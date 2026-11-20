@@ -1,0 +1,47 @@
+name: Tests
+
+# M4 extra credit: CI integration. Runs the backend unit test suite (with
+# coverage) and the frontend build/lint/STL checks on every pull request and
+# on pushes to main/dev/feature branches.
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev, "feature/**"]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        working-directory: app/backend
+        run: pip install -r requirements-dev.txt
+      - name: Run backend tests with coverage
+        working-directory: app/backend
+        run: |
+          env -u TEST_DATABASE_URL python -m pytest -q \
+            --cov=app --cov-report=term-missing --cov-fail-under=85
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        working-directory: app/frontend
+        run: npm ci
+      - name: Lint
+        working-directory: app/frontend
+        run: npm run lint
+      - name: Build
+        working-directory: app/frontend
+        run: npm run build
+      - name: STL unit tests
+        working-directory: app/frontend
+        run: node --test src/lib/stl.test.js
