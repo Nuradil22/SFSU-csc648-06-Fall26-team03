@@ -1,4 +1,5 @@
-import test from 'node:test';
+import { test } from "vitest";
+import { describe, it, expect } from "vitest";
 import assert from 'node:assert/strict';
 import { BoxGeometry, Group, Mesh, BoxHelper, InstancedMesh, Matrix4 } from 'three';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';

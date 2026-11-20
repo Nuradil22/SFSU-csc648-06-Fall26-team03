@@ -44,4 +44,4 @@ jobs:
         run: npm run build
       - name: STL unit tests
         working-directory: app/frontend
-        run: node --test src/lib/stl.test.js
+        npm test -- --run
