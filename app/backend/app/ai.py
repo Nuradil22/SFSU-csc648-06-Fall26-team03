@@ -16,6 +16,7 @@ To add another provider, write a function with the same signature as
 
 import json
 import logging
+import re
 from collections.abc import Callable
 
 from . import models
@@ -108,37 +109,63 @@ def has_enough_data(payload: dict) -> bool:
     return any(payload[key] for key in ("education", "skills", "experience", "certificates", "projects"))
 
 
-# Minimum portfolio for the career assistant (/career/*). Every required item can
-# be saved from the existing dashboard: education, skills, and job preferences on
-# Account Setup, projects on the project editor. The keys are stable so the
-# frontend can link each one to the existing page where it is added.
+# What a personalized roadmap needs (/career/roadmap/auto and roadmap requests
+# in chat; ordinary chat is always available). Every required item can be saved
+# from Account Setup on the dashboard. Projects, experience, and certificates
+# are optional: zero of each is valid. The keys are stable so the frontend can
+# link each one to the existing page where it is added.
 MIN_SKILLS_FOR_ADVISOR = 3
+
+# Words that only state an education level, not a field: "B.S." or "Bachelor
+# of Science" alone has no major; "B.S. Nursing" or "B.A. Undecided" does.
+_LEVEL_WORDS = {
+    "a", "b", "m", "s", "f", "d", "aa", "as", "ba", "bs", "bfa", "ma", "ms", "mfa", "mba", "phd",
+    "ph", "edd", "associate", "associates", "bachelor", "bachelors", "master", "masters",
+    "doctorate", "doctor", "degree", "of", "in", "and", "arts", "art", "science", "sciences",
+    "fine", "high", "school", "diploma", "ged", "certificate", "program", "student", "major",
+    "undergraduate", "graduate", "freshman", "sophomore", "junior", "senior", "year",
+}
+
+
+def _words(text) -> list[str]:
+    return re.findall(r"[a-z]+", str(text or "").lower())
+
+
+def _has_field(entry: dict) -> bool:
+    """A major or field of study ("Undecided" counts) in the major field or
+    after the level in the degree field (Account Setup saves both in one box)."""
+    return bool(str(entry.get("major") or "").strip()) or any(
+        word not in _LEVEL_WORDS for word in _words(entry.get("degree"))
+    )
 
 
 def portfolio_readiness(payload: dict) -> dict:
-    """Whether the saved portfolio is complete enough for personalized advice.
+    """Whether the saved portfolio has what a personalized roadmap needs.
 
     Returns {"ready", "missing", "optional_missing"}; each item is {"key", "label"}.
-    `missing` blocks the assistant; `optional_missing` is passed to the AI so it
-    knows what it doesn't have (and never asks for what is already saved).
+    `missing` blocks roadmap generation (never ordinary chat); `optional_missing`
+    is passed to the AI so it knows what it doesn't have (and never asks for
+    what is already saved).
     """
-    education = [
-        e for e in payload["education"] if e.get("school") and (e.get("degree") or e.get("major"))
-    ]
+    education = payload["education"]
     goals = list(payload["career_interests"]) + [j["role"] for j in payload["job_preferences"] if j.get("role")]
 
     required = [
-        ("education", "Your school and degree (Education & Degrees)", bool(education)),
-        ("skills", f"At least {MIN_SKILLS_FOR_ADVISOR} skills", len(payload["skills"]) >= MIN_SKILLS_FOR_ADVISOR),
-        ("career_goal", "At least one job preference (the role you're aiming for)", bool(goals)),
-        ("projects", "At least one project", bool(payload["projects"] or payload["experience"])),
+        ("education", "Your education level, such as B.S., B.A., A.A., or high school (Education & Degrees)",
+         any(str(e.get("degree") or "").strip() for e in education)),
+        ("major", 'Your major or field of study; "Undecided" is fine (Education & Degrees)',
+         any(_has_field(e) for e in education)),
+        ("career_goal", "Your career goal or the direction you're aiming for (Job Preferences)", bool(goals)),
+        ("skills", f"At least {MIN_SKILLS_FOR_ADVISOR} skills; beginner level counts (Skills)",
+         len(payload["skills"]) >= MIN_SKILLS_FOR_ADVISOR),
     ]
     optional = [
         ("graduation_date", "Expected graduation year",
          bool(education) and not any(e.get("graduation_date") for e in education)),
-        ("certificates", "Certificates", not payload["certificates"]),
+        ("projects", "Projects", not payload["projects"]),
         ("experience", "Work, internship, research, or volunteer experience", not payload["experience"]),
-        ("coursework", "Completed coursework", not any(e.get("coursework") for e in payload["education"])),
+        ("certificates", "Certificates", not payload["certificates"]),
+        ("coursework", "Completed coursework", not any(e.get("coursework") for e in education)),
     ]
 
     missing = [{"key": key, "label": label} for key, label, ok in required if not ok]

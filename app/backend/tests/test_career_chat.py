@@ -1,5 +1,7 @@
 """Career chatbot (/career/*): chat, AI roadmap proposals, approve/reject,
-owner edits, and per-account isolation. Runs with AI_PROVIDER=mock."""
+owner edits, and per-account isolation. Ordinary chat runs with
+AI_PROVIDER=mock; roadmaps come from the scripted OpenAI fake with a verified
+educational offering (the mock provider never creates a roadmap)."""
 
 import openai
 import pytest
@@ -26,7 +28,20 @@ def _with_portfolio(client, headers, skills=("Python", "SQL", "Git"), role="Data
     _add(client, headers, "/projects", {"title": f"{skills[0]} pipeline"})
 
 
+@pytest.fixture
+def edu_ai(monkeypatch):
+    """OpenAI fake with research on; each roadmap request gets a verified
+    educational roadmap."""
+    openai_fakes.reset()
+    monkeypatch.setattr(settings, "ai_provider", "openai")
+    monkeypatch.setattr(settings, "openai_api_key", "test-key")
+    monkeypatch.setattr(settings, "openai_web_search", True)
+    monkeypatch.setattr(openai, "OpenAI", openai_fakes.FakeOpenAI)
+    return openai_fakes.FakeOpenAI
+
+
 def _roadmap_proposal(client, headers):
+    openai_fakes.FakeOpenAI.script.append(openai_fakes.researched(openai_fakes.educational_plan()))
     r = client.post("/career/chat", headers=headers, json={"message": "Make me a roadmap"})
     assert r.status_code == 200, r.text
     body = r.json()
@@ -58,7 +73,7 @@ def test_chat_rejects_empty_and_oversized_messages(client, auth):
     assert client.post("/career/chat", headers=auth, json={"message": "x" * 3001}).status_code == 422
 
 
-def test_roadmap_proposal_approve_flow(client, auth):
+def test_roadmap_proposal_approve_flow(client, auth, edu_ai):
     _with_portfolio(client, auth)
     assert client.get("/career/roadmap", headers=auth).json() is None
 
@@ -73,6 +88,7 @@ def test_roadmap_proposal_approve_flow(client, auth):
     roadmap = client.get("/career/roadmap", headers=auth).json()
     assert roadmap["title"] == body["proposal"]["title"]
     assert roadmap["goals"] == body["proposal"]["goals"]
+    assert roadmap["educational"] is True and roadmap["offerings"] == 1
     assert client.get("/career/proposals", headers=auth).json() == []
     # Cannot be decided twice.
     assert client.post(f"/career/proposals/{pid}/reject", headers=auth).status_code == 409
@@ -85,7 +101,7 @@ def test_roadmap_proposal_approve_flow(client, auth):
     assert client.get("/career/roadmap", headers=auth).json()["goals"][0]["milestones"][0]["completed"] is True
 
 
-def test_roadmap_proposal_reject_flow(client, auth):
+def test_roadmap_proposal_reject_flow(client, auth, edu_ai):
     _with_portfolio(client, auth)
     pid = _roadmap_proposal(client, auth)["proposal_id"]
     r = client.post(f"/career/proposals/{pid}/reject", headers=auth)
@@ -95,7 +111,7 @@ def test_roadmap_proposal_reject_flow(client, auth):
     assert client.post(f"/career/proposals/{pid}/maybe", headers=auth).status_code == 400
 
 
-def test_roadmaps_are_separated_by_account(client, auth):
+def test_roadmaps_are_separated_by_account(client, auth, edu_ai):
     other = signup(client, email="other-career@sfsu.edu")
     _with_portfolio(client, auth)
     _with_portfolio(client, other)
@@ -119,21 +135,21 @@ def test_roadmaps_are_separated_by_account(client, auth):
     assert client.get("/career/roadmap", headers=other).json()["title"] == "Theirs"
 
 
-# --- Portfolio readiness (assistant only works from a complete portfolio) ----
+# --- Portfolio readiness (roadmaps need the essentials; chat is always open) ----
 
 def _missing(client, headers):
     body = client.get("/career/readiness", headers=headers).json()
     return body["ready"], [item["key"] for item in body["missing"]]
 
 
-def test_empty_portfolio_blocks_chat_for_every_provider(client, auth, monkeypatch):
-    assert _missing(client, auth) == (False, ["education", "skills", "career_goal", "projects"])
+def test_empty_portfolio_blocks_roadmaps_for_every_provider(client, auth, monkeypatch):
+    assert _missing(client, auth) == (False, ["education", "major", "career_goal", "skills"])
 
     for provider in ("mock", "openai", "anthropic"):
         monkeypatch.setattr(settings, "ai_provider", provider)
         r = client.post("/career/chat", headers=auth, json={"message": "Make me a roadmap"})
         assert r.status_code == 409, provider
-        assert "complete your Projectory portfolio" in r.json()["detail"]
+        assert "To create your personalized roadmap, I still need" in r.json()["detail"]
 
     # Nothing is stored for a blocked request.
     assert client.get("/career/chat/history", headers=auth).json() == []
@@ -144,28 +160,29 @@ def test_partial_portfolio_lists_only_what_is_missing_then_unlocks(client, auth)
     _add(client, auth, "/portfolio/me/education",
          {"school_name": "San Francisco State University", "degree": "B.S. Biology"})
     _add(client, auth, "/portfolio/me/skills", {"name": "Lab safety"})
-    assert _missing(client, auth) == (False, ["skills", "career_goal", "projects"])
+    assert _missing(client, auth) == (False, ["career_goal", "skills"])
 
-    # Saving the rest from the dashboard is picked up with no other step.
+    # Saving the rest from the dashboard is picked up with no other step;
+    # no project, experience, or certificate is needed.
     for name in ("Microscopy", "R"):
         _add(client, auth, "/portfolio/me/skills", {"name": name})
     _add(client, auth, "/portfolio/me/job-preferences", {"role": "Research Associate"})
-    _add(client, auth, "/projects", {"title": "Enzyme kinetics study"})
 
     body = client.get("/career/readiness", headers=auth).json()
     assert body["ready"] is True and body["missing"] == []
-    assert "graduation_date" in [item["key"] for item in body["optional_missing"]]
+    optional = [item["key"] for item in body["optional_missing"]]
+    assert {"graduation_date", "projects", "experience", "certificates"} <= set(optional)
     assert client.post("/career/chat", headers=auth, json={"message": "Hi"}).status_code == 200
 
 
-def test_education_needs_a_degree_and_experience_counts_as_project_evidence(client, auth):
+def test_school_alone_needs_an_education_level_and_a_major(client, auth):
     _add(client, auth, "/portfolio/me/education", {"school_name": "SFSU"})
     for name in ("Python", "SQL", "Git"):
         _add(client, auth, "/portfolio/me/skills", {"name": name})
     _add(client, auth, "/portfolio/me/job-preferences", {"role": "Data Analyst"})
     _add(client, auth, "/portfolio/me/experience",
          {"experience_type": "internship", "organization": "Acme", "position": "Intern"})
-    assert _missing(client, auth) == (False, ["education"])
+    assert _missing(client, auth) == (False, ["education", "major"])
 
 
 # --- OpenAI path: the prompt is built from the caller's own saved data --------
@@ -201,13 +218,12 @@ def test_openai_prompt_uses_only_the_callers_portfolio(client, auth, fake_openai
     assert "student@sfsu.edu" not in mine and "Sam Student" not in mine
 
 
-def test_openai_prompt_includes_pending_draft_for_follow_ups(client, auth, fake_openai, monkeypatch):
+def test_openai_prompt_includes_pending_draft_for_follow_ups(client, auth, edu_ai, monkeypatch):
     _with_portfolio(client, auth)
-    monkeypatch.setattr(settings, "ai_provider", "mock")
     proposal = _roadmap_proposal(client, auth)["proposal"]
 
-    monkeypatch.setattr(settings, "ai_provider", "openai")
-    openai_fakes.FakeOpenAI.script = [{"parsed": {"proposal": openai_fakes.plan(title="Shorter")}}]
+    fake_openai = edu_ai.calls
+    edu_ai.script = [openai_fakes.researched(openai_fakes.educational_plan(title="Shorter"))]
     r = client.post("/career/chat", headers=auth, json={"message": "Make that roadmap shorter"})
     assert r.status_code == 200, r.text
     assert r.json()["proposal"]["title"] == "Shorter"
@@ -242,3 +258,25 @@ def test_roadmap_resources_are_kept_and_sanitized(client, auth):
     goals[0]["milestones"][0]["completed"] = True
     again = client.put("/career/roadmap", headers=auth, json={"title": "Plan", "goals": goals}).json()
     assert again["goals"][0]["milestones"][0]["resources"] == saved
+
+
+# --- The mock provider never invents a roadmap --------------------------------
+
+def test_mock_provider_never_creates_a_generic_roadmap(client, auth):
+    """Without research there is no verified offering, so a roadmap request
+    is answered with an explanation; nothing is stored or approvable."""
+    _with_portfolio(client, auth)
+    r = client.post("/career/chat", headers=auth, json={"message": "Make me a roadmap"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["proposal"] is None and body["proposal_id"] is None
+    assert body["roadmap_unverified"] is True
+    assert "verified" in body["reply"] and "no roadmap was created" in body["reply"]
+    assert client.get("/career/proposals", headers=auth).json() == []
+
+    # Ordinary chat mentioning a plan or goal doesn't create one either.
+    r = client.post("/career/chat", headers=auth, json={"message": "What goal should I plan for?"})
+    assert r.json()["proposal"] is None
+
+    auto = client.post("/career/roadmap/auto", headers=auth).json()
+    assert auto["status"] == "unverified" and "proposal" not in auto

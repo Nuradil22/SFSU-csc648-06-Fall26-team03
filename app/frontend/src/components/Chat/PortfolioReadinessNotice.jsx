@@ -1,29 +1,31 @@
 import { Link } from "react-router-dom";
 
-// Where each required item is already added in Projectory. These are the
-// existing dashboard destinations ("Manage Education", "Manage Skills",
-// "Edit Preferences" -> Account Setup; "+ Add a Project" -> project editor).
+// Where each required item is already added in Projectory: the existing
+// dashboard destinations ("Manage Education", "Manage Skills", "Edit
+// Preferences" -> Account Setup). The major goes in the Degree box there
+// (e.g. "B.A. Undecided").
 const WHERE = {
     education: { to: "/account/setup", text: "Account Setup → Education & Degrees" },
-    skills: { to: "/account/setup", text: "Account Setup → Skills" },
+    major: { to: "/account/setup", text: "Account Setup → Education & Degrees" },
     career_goal: { to: "/account/setup", text: "Account Setup → Job Preferences" },
-    projects: { to: "/projects/new", text: "Add a Project" }
+    skills: { to: "/account/setup", text: "Account Setup → Skills" }
 };
 
-// Shown in place of the chat input while the student's saved portfolio is
-// missing what the assistant needs (GET /career/readiness). The assistant
-// reads the portfolio from the account, so nothing is typed in here.
+// Shown above the chat while the saved portfolio is missing what a
+// personalized roadmap needs (GET /career/readiness). The chat itself stays
+// available; the assistant reads the portfolio from the account, so nothing
+// is typed in here.
 export default function PortfolioReadinessNotice({ missing }) {
     return (
         <div className="chat-readiness" role="status">
             <p className="chat-readiness-title">
-                Let's finish your portfolio first
+                A few details before your personalized roadmap
             </p>
             <p>
-                I build advice and roadmaps from the information saved in your
-                Projectory portfolio. Please add the following using your
-                existing dashboard options. I'll pick it up automatically as
-                soon as it's saved.
+                You can ask me anything now. To build a roadmap for you, I need
+                the following saved in your Projectory portfolio. Projects, work
+                experience, and certificates are optional. I'll pick up your
+                changes automatically as soon as they're saved.
             </p>
 
             <ul className="chat-readiness-list">

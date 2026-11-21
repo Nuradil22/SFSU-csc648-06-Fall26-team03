@@ -82,6 +82,12 @@
     white-space: nowrap;
 }
 
+.roadmap-goal-serves {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
 /* Milestones branch off their goal with a short horizontal connector. */
 .roadmap-milestones {
     list-style: none;
@@ -120,4 +126,51 @@
 .app.dark .roadmap-goal-head {
     background: #22272b;
     border-color: #3a4a55;
+}
+
+/* "Learn" / "Apply" label on milestones of competency goals. */
+.roadmap-step {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.5;
+    vertical-align: 1px;
+}
+
+.roadmap-step.is-learn {
+    background: #e3f0f8;
+    color: #1f5f80;
+}
+
+.roadmap-step.is-apply {
+    background: #e5f3ea;
+    color: #2d6b4a;
+}
+
+.app.dark .roadmap-step.is-learn {
+    background: #1f3a4a;
+    color: #b9def5;
+}
+
+.app.dark .roadmap-step.is-apply {
+    background: #1f3a2c;
+    color: #bfe6cf;
+}
+
+/* Approved roadmap without verified educational offerings: informational only. */
+.roadmap-unverified {
+  margin: 4px 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid #b7791f;
+  background: #fff8e6;
+  font-size: 0.85rem;
+  color: #5c3d00;
+}
+
+.app.dark .roadmap-unverified {
+  background: #2d2615;
+  color: #f3d9a4;
 }

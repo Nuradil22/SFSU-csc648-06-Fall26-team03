@@ -124,9 +124,10 @@ def test_unreachable_links_are_dropped_and_good_ones_kept(client, auth, research
     research.script = [{
         "output": [search_call(OK, GONE, BAD_TLS, REFUSES, MOVED)],
         "parsed": {"proposal": plan(
-            [resource("CSC courses", OK), resource("Removed edX course", GONE, provider="edX")],
+            [resource("Database Systems", OK), resource("Removed edX course", GONE, provider="edX")],
             [resource("Catalog mirror", BAD_TLS)],
-            [resource("AT certificates", REFUSES), resource("Data Analytics", MOVED, provider="Coursera")],
+            [resource("Data Science Certificate", REFUSES),
+             resource("Data Analytics", MOVED, provider="Coursera")],
         )},
     }]
     r = client.post("/career/roadmap/auto", headers=auth)
@@ -169,13 +170,21 @@ def test_blocked_domains_are_never_sources(client, auth, research, links):
 
 
 def test_blocked_domains_are_configurable(client, auth, research, monkeypatch):
-    monkeypatch.setattr(settings, "openai_web_search_blocked_domains", "")
     _ready(client, auth)
     forum = "https://www.reddit.com/r/SFSU/comments/x"
-    research.script = [{"output": [search_call(forum)],
-                        "parsed": {"resources": [resource("Thread", forum, provider="Reddit")]}}]
+    script = {"output": [search_call(OK, forum)], "parsed": {"resources": [
+        resource("Database Systems", OK), resource("Thread", forum, provider="Reddit")]}}
+
+    monkeypatch.setattr(settings, "openai_web_search_blocked_domains", "sfsu.edu")
+    research.script = [script]
     body = client.post("/career/chat", headers=auth, json={"message": "Any courses?"}).json()
-    assert [x["url"] for x in body["resources"]] == [forum]
+    assert body["resources"] == []                       # the configured block applies
+
+    # Unblocked, the course is shown; a forum is never an educational offering.
+    monkeypatch.setattr(settings, "openai_web_search_blocked_domains", "")
+    research.script = [script]
+    body = client.post("/career/chat", headers=auth, json={"message": "Any courses?"}).json()
+    assert [x["url"] for x in body["resources"]] == [OK]
 
 
 def test_link_check_can_be_turned_off(client, auth, research, monkeypatch):
@@ -196,5 +205,6 @@ def test_every_link_failing_still_returns_the_roadmap(client, auth, research, li
         "parsed": {"proposal": plan([resource("Gone", GONE), resource("Mirror", BAD_TLS)])},
     }]
     r = client.post("/career/roadmap/auto", headers=auth)
-    assert r.status_code == 200
-    assert r.json()["proposal"]["goals"][0]["milestones"][0].get("resources") is None
+    assert r.status_code == 200                          # link problems never fail the request
+    assert r.json()["status"] == "unverified" and "proposal" not in r.json()
+    assert client.get("/career/proposals", headers=auth).json() == []
